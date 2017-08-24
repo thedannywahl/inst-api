@@ -63,7 +63,7 @@ manualinstall() {
   elif [ ${dep[3]} = "pip" ]; then
     echo >&2 "Try using \`pip install ${dep[1]}\` to manually install"
   else
-    echo >&2 "curl must be installed using a system package manager"
+    echo >&2 "${dep[1]} must be installed using a system package manager"
   fi
   exit 127
 }
@@ -149,10 +149,10 @@ examples() {
 # `null` is a hacky shift to avoid string manipulation of
 # multi-dimensional array when passed as a parameter
 json=("" "json" "json" "npm")
-ansi=("" "strip-ansi-cli" "strip-ansi" "npm")
+pygments=("" "pygments" "pygmentize" "pip")
 shellgetopts=("" "getopts" "getopts" "system")
 curl=("" "curl" "curl" "system")
-dependencies=(ANSI=${ansi[@]} JSON=${json[@]} SHELLGETOPTS=${shellgetopts[@]} CURL=${curl[@]})
+dependencies=(ANSI=${ansi[@]} JSON=${json[@]} PYGMENTS=${pygments[@]} SHELLGETOPTS=${shellgetopts[@]} CURL=${curl[@]})
 for dep in "${dependencies[@]}"
   do dependency ${dep[@]}
 done
@@ -163,7 +163,7 @@ done
 canvas_domain=""
 canvas_token=""
 readconfig() {
-  if [ -r ~/.inst ]; then
+  if [ -f ~/.inst ]; then
     . ~/.inst
     if [ -z $canvas_domain ]; then
       echo >&2 "unable to read domain from config file \`~/.inst\`"
@@ -263,7 +263,10 @@ setoutput() {
 # ##############################################################################
 
 curlopts=""
-if [ $# -eq 0 ]; then
+if [ $# -eq 0 ] && [ ! -f ~/.inst ]; then
+  readconfig
+  help
+elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
   help
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
@@ -303,7 +306,7 @@ else
       shift
       break
     else
-      echo "no path!"
+      echo "No API method provided!"
       usage
       exit 2
     fi
