@@ -152,7 +152,7 @@ json=("" "json" "json" "npm")
 pygments=("" "pygments" "pygmentize" "pip")
 shellgetopts=("" "getopts" "getopts" "system")
 curl=("" "curl" "curl" "system")
-dependencies=(ANSI=${ansi[@]} JSON=${json[@]} PYGMENTS=${pygments[@]} SHELLGETOPTS=${shellgetopts[@]} CURL=${curl[@]})
+dependencies=(JSON=${json[@]} PYGMENTS=${pygments[@]} SHELLGETOPTS=${shellgetopts[@]} CURL=${curl[@]})
 for dep in "${dependencies[@]}"
   do dependency ${dep[@]}
 done
@@ -241,6 +241,7 @@ settoken() {
 
 # OUTPUT FILE ##################################################################
 # ##############################################################################
+
 outputpath=""
 setoutput() {
   if [ -f $1 ]; then
