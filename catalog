@@ -226,7 +226,7 @@ setconfig() {
 
 setdomain() {
   clear
-  echo >&2 "what is your canvas subdomain?"
+  echo >&2 "what is your catalog subdomain?"
   echo >&2 "https://<subdomain>.catalog.instructure.com"
   read catalogdomain
   echo "catalog_domain=\"$catalogdomain\"" >> ~/.inst
@@ -287,9 +287,9 @@ else
         x)
           sethttp $OPTARG ;;
         d)
-          canvas_domain="$OPTARG" ;;
+          catalog_domain="$OPTARG" ;;
         t)
-          canvas_token="$OPTARG" ;;
+          catalog_token="$OPTARG" ;;
         o)
           setoutput $OPTARG ;;
         o)
