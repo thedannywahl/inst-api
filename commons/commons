@@ -143,7 +143,7 @@ version() {
 }
 
 license() {
-  curl -s "https://raw.githubusercontent.com/thedannywahl/inst-api/master/LICENSE" | less
+  curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -X GET "https://www.apache.org/licenses/LICENSE-2.0.txt" | less
   exit
 }
 
