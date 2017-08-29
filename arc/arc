@@ -134,7 +134,7 @@ verbosehelp() {
 }
 
 usage() {
-  echo -e 2>&1 "Usage: $0 ...\r\nHelp:  $0 -h"
+  echo -e 2>&1 "Usage: arc [options] [curl options] method\r\nHelp:  arc -h"
 }
 
 version() {
