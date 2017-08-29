@@ -129,7 +129,7 @@ help() {
 }
 
 verbosehelp() {
-  echo "Usage: $0 -p :<path> [-x ::<HTTP>] [-t <token>] [-d :<domain>] [-o :<path>] [-r ::<render>] [curl opts] [-c :config]" | less
+  curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -X GET "https://raw.githubusercontent.com/thedannywahl/inst-api/master/canvas/README" | less
   exit;
 }
 
