@@ -341,13 +341,12 @@ fi
 # START SESSION ################################################################
 # ##############################################################################
 # TODO: ERROR HANDLING
+
 JWT=""
 JWT=$(curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H "Authorization: Bearer $canvas_token" -X GET https://$canvas_domain.instructure.com/api/lti/accounts/self/jwt_token?tool_launch_url=https://lor.instructure.com/api/lti | python -c 'import sys, json; print json.load(sys.stdin)["jwt_token"]')
-echo $JWT
 
 session=""
 session=$(curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H "Content-Type: application/json" --data '{"jwt_token":"'$JWT'"}' -X POST https://lor.instructure.com/api/sessions | python -c 'import sys, json; print json.load(sys.stdin)["sessionId"]')
-echo $session
 
 # RUN QUERY ####################################################################
 # ##############################################################################
