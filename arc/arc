@@ -1,8 +1,21 @@
 #!/bin/bash
-# catalog-cli by Danny Wahl dwahl@instructure.com
-# a simple tool to help interact
-# with the canvas Catalog API
-# (http://api.catalog.instructure.com/api/docs)
+
+# LICENSE ######################################################################
+# ##############################################################################
+#
+# Copyright 2017 Danny Wahl (danny@instructure.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 # HELPER FUNCTIONS #############################################################
 # ##############################################################################
@@ -15,7 +28,7 @@ dependency() {
 prompt() {
   declare -a dep=("$@")
   clear
-  echo >&2 "catalog-cli requires ${dep[1]} (${dep[3]}) but it's not installed"
+  echo >&2 "arc-cli requires ${dep[1]} (${dep[3]}) but it's not installed"
   echo >&2 "would you like to install it now?"
   select yn in "Yes" "No"; do
     case $yn in
@@ -28,7 +41,7 @@ prompt() {
 install() {
   declare -a dep=("$@")
   clear
-  echo >&2 "catalog-cli will attempt to install ${dep[1]} (${dep[3]})"
+  echo >&2 "arc-cli will attempt to install ${dep[1]} (${dep[3]})"
   hr
   if [ ${dep[3]} = "npm" ]; then
     command -v ${dep[3]} > /dev/null 2>&1 && npm install -g "${dep[1]}" || manualinstall ${dep[@]} ""
@@ -49,7 +62,7 @@ manualinstall() {
   declare -a dep=("$@")
   if [ ${#dep[@]} -gt 4 ]; then
     hr
-    echo "catalog-cli was unable to install ${dep[1]} (${dep[3]})"
+    echo "arc-cli was unable to install ${dep[1]} (${dep[3]})"
     if [ ${dep[3]} = "npm" ]; then
       echo >&2 "\`npm install -g ${dep[1]}\` failed"
     elif [ ${dep[3]} = "pip" ]; then
@@ -125,12 +138,12 @@ usage() {
 }
 
 version() {
-  echo >&2 "catalog-cli version 0.1"
+  echo >&2 "arc-cli version 0.1"
   exit
 }
 
 license() {
-  echo 2>&1 "LICENSE TEXT" | less
+  curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -X GET "https://www.apache.org/licenses/LICENSE-2.0.txt" | less
   exit
 }
 
@@ -160,21 +173,28 @@ done
 # PREF FILE ####################################################################
 # ##############################################################################
 
-catalog_domain=""
-catalog_token=""
+arc_domain=""
+arc_email=""
+arc_password=""
 readconfig() {
   if [ -f ~/.inst ]; then
     . ~/.inst
-    if [ -z $catalog_domain ]; then
+    if [ -z $arc_domain ]; then
       echo >&2 "unable to read domain from config file \`~/.inst\`"
       echo >&2 "It must be manually added or repaired.  Format:"
-      echo >&2 "catalog_domain=\"<domain>\""
+      echo >&2 "arc_domain=\"<domain>\""
       exit 2
     fi
-    if [ -z $catalog_token ]; then
+    if [ -z $arc_email ]; then
       echo >&2 "unable to read token from config file \`~/.inst\`"
       echo >&2 "It must be manually added or repaired.  Format:"
-      echo >&2 "catalog_token=\"<token>\""
+      echo >&2 "arc_email=\"<token>\""
+      exit 2;
+    fi
+    if [ -z $arc_password ]; then
+      echo >&2 "unable to read token from config file \`~/.inst\`"
+      echo >&2 "It must be manually added or repaired.  Format:"
+      echo >&2 "arc_password=\"<token>\""
       exit 2;
     fi
   else
@@ -187,7 +207,7 @@ readconfig() {
           setconfig; break ;;
         No )
           clear
-          echo >&2 "catalog-cli requires a config file or use \`-d\` and \`-t\`"
+          echo >&2 "arc-cli requires a config file or use \`-d\`, \`-e\`, and \`-p\`"
           usage; exit 2 ;;
       esac
     done
@@ -198,7 +218,7 @@ setconfig() {
   clear
   echo -e "DO NOT create a config file on a shared system"
   echo >&2 "other system users will be able to authenticate using your"
-  echo >&2 "saved credentials.  Instead use the \`-d\` and \`-t\` options"
+  echo >&2 "saved credentials.  Instead use the \`-d\`, \`-e\`, and \`-p\` options"
   echo >&2 "Do you wish to proceed?"
   select ok in "Okay" "Cancel"; do
     case $ok in
@@ -206,7 +226,8 @@ setconfig() {
         touch ~/.inst
         if [ $? = 0 ]; then
           setdomain
-          settoken
+          setemail
+          setpassword
           readconfig
         else
           clear
@@ -216,7 +237,7 @@ setconfig() {
         fi; break;;
       Cancel)
         clear
-        echo >&2 "Enter your command again using the \`-t\` and \`-d\` options"
+        echo >&2 "Enter your command again using the \`-d\`, \`-e\`, and \`-p\` options"
         usage;
         exit 0;;
     esac
@@ -226,17 +247,24 @@ setconfig() {
 
 setdomain() {
   clear
-  echo >&2 "what is your catalog subdomain?"
-  echo >&2 "https://<subdomain>.catalog.instructure.com"
-  read catalogdomain
-  echo "catalog_domain=\"$catalogdomain\"" >> ~/.inst
+  echo >&2 "what is your arc subdomain?"
+  echo >&2 "https://<subdomain>.instructuremedia.com"
+  read arcdomain
+  echo "arc_domain=\"$arcdomain\"" >> ~/.inst
 }
 
-settoken() {
+setemail() {
   clear
-  echo >&2 "please input your Canvas API token"
-  read catalogtoken
-  echo >&2 "catalog_token=\"$catalogtoken\"" >> ~/.inst
+  echo >&2 "What is your arc login email address?"
+  read arcemail
+  echo >&2 "arc_email=\"$arcemail\"" >> ~/.inst
+}
+
+setpassword() {
+  clear
+  echo >&2 "What is your arc login password?"
+  read arcpassword
+  echo >&2 "arc_password=\"$arcpassword\"" >> ~/.inst
 }
 
 # OUTPUT FILE ##################################################################
@@ -264,7 +292,6 @@ setoutput() {
 # ##############################################################################
 
 curlopts=""
-page=""
 if [ $# -eq 0 ] && [ ! -f ~/.inst ]; then
   readconfig
   help
@@ -272,7 +299,7 @@ elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
   help
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
-    while getopts ":hlvcr:x:t:d:o:p:F:" opt; do
+    while getopts ":hlvcr:x:e:p:d:o:F:" opt; do
       case $opt in
         h)
           verbosehelp ;;
@@ -287,13 +314,13 @@ else
         x)
           sethttp $OPTARG ;;
         d)
-          catalog_domain="$OPTARG" ;;
-        t)
-          catalog_token="$OPTARG" ;;
+          arc_domain="$OPTARG" ;;
+        e)
+          arc_email="$OPTARG" ;;
+        p)
+          arc_password="$OPTARG" ;;
         o)
-          setoutput $OPTARG ;;
-        o)
-          page="$OPTARG" ;;
+          setoutput $OPTARG;;
         F)
           # -F opts are concatenated and
           # transparently passed to curl
@@ -324,10 +351,10 @@ fi
 # BUILD COMMAND ################################################################
 # ##############################################################################
 
-if [ -z "$catalog_domain" ] && [ -z "$catalog_token" ]; then
+if [ -z "$arc_domain" ] && [ -z "$arc_email" ] && [ -z "$arc_password" ]; then
   readconfig
-elif [ -z "$catalog_domain" ] || [ -z "$catalog_token" ]; then
-  echo >&2 "Both \`-d\` and \`-t\` are requied when not using a config file"
+elif [ -z "$arc_domain" ] || [ -z "$arc_email" ] || [ -z "$arc_password" ]; then
+  echo >&2 "\`-d\`, \`-e\`, and \`-p\` are required when not using a config file"
   usage
   exit 2
 fi
@@ -336,5 +363,19 @@ if [ -n "$outputpath" ] && [ -n "$outputrenderer" ]; then
   outputrenderer=""
 fi
 
-command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H 'Authorization: Token token=\"$catalog_token\"' -X $httpmethod https://$catalog_domain.catalog.instructure.com/api/v1/$path$page$curlopts $outputrenderer $outputpath"
+# START SESSION ################################################################
+# ##############################################################################
+# TODO: ERROR HANDLING
+
+session=""
+userid=""
+token=""
+session=$(curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H "Content-Type: application/json" --data '{"email":"'$arc_email'","password":"'$arc_password'"}' -X POST https://$arc_domain.instructuremedia.com/api/auth/session)
+token=$(echo "$session" | python -c 'import sys, json; print json.load(sys.stdin)["session"]["token"]')
+userid=$(echo "$session" | python -c 'import sys, json; print json.load(sys.stdin)["session"]["user"]["id"]')
+
+# RUN QUERY ####################################################################
+# ##############################################################################
+
+command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H 'Authorization: Bearer user_id=\"$userid\", token=\"$token\"' -X $httpmethod https://$arc_domain.instructuremedia.com/api/$path$curlopts $outputrenderer $outputpath"
 eval $command

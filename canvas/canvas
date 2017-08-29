@@ -1,8 +1,21 @@
 #!/bin/bash
-# commons-cli by Danny Wahl dwahl@instructure.com
-# a simple tool to help interact
-# with the commons API
-# (https://lor-staging.instructure.com/docs/api/)
+
+# LICENSE ######################################################################
+# ##############################################################################
+#
+# Copyright 2017 Danny Wahl (danny@instructure.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 # HELPER FUNCTIONS #############################################################
 # ##############################################################################
@@ -15,7 +28,7 @@ dependency() {
 prompt() {
   declare -a dep=("$@")
   clear
-  echo >&2 "commons-cli requires ${dep[1]} (${dep[3]}) but it's not installed"
+  echo >&2 "canvas-cli requires ${dep[1]} (${dep[3]}) but it's not installed"
   echo >&2 "would you like to install it now?"
   select yn in "Yes" "No"; do
     case $yn in
@@ -28,7 +41,7 @@ prompt() {
 install() {
   declare -a dep=("$@")
   clear
-  echo >&2 "commons-cli will attempt to install ${dep[1]} (${dep[3]})"
+  echo >&2 "canvas-cli will attempt to install ${dep[1]} (${dep[3]})"
   hr
   if [ ${dep[3]} = "npm" ]; then
     command -v ${dep[3]} > /dev/null 2>&1 && npm install -g "${dep[1]}" || manualinstall ${dep[@]} ""
@@ -49,7 +62,7 @@ manualinstall() {
   declare -a dep=("$@")
   if [ ${#dep[@]} -gt 4 ]; then
     hr
-    echo "commons-cli was unable to install ${dep[1]} (${dep[3]})"
+    echo "canvas-cli was unable to install ${dep[1]} (${dep[3]})"
     if [ ${dep[3]} = "npm" ]; then
       echo >&2 "\`npm install -g ${dep[1]}\` failed"
     elif [ ${dep[3]} = "pip" ]; then
@@ -125,12 +138,12 @@ usage() {
 }
 
 version() {
-  echo >&2 "commons-cli version 0.1"
+  echo >&2 "canvas-cli version 0.1"
   exit
 }
 
 license() {
-  echo 2>&1 "LICENSE TEXT" | less
+  curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -X GET "https://www.apache.org/licenses/LICENSE-2.0.txt" | less
   exit
 }
 
@@ -152,8 +165,7 @@ json=("" "json" "json" "npm")
 pygments=("" "pygments" "pygmentize" "pip")
 shellgetopts=("" "getopts" "getopts" "system")
 curl=("" "curl" "curl" "system")
-python=("" "python" "python" "system")
-dependencies=(JSON=${json[@]} PYGMENTS=${pygments[@]} SHELLGETOPTS=${shellgetopts[@]} CURL=${curl[@]} PYTHON=${python[@]})
+dependencies=(JSON=${json[@]} PYGMENTS=${pygments[@]} SHELLGETOPTS=${shellgetopts[@]} CURL=${curl[@]})
 for dep in "${dependencies[@]}"
   do dependency ${dep[@]}
 done
@@ -188,7 +200,7 @@ readconfig() {
           setconfig; break ;;
         No )
           clear
-          echo >&2 "commons-cli requires a config file or use \`-d\` and \`-t\`"
+          echo >&2 "canvas-cli requires a config file or use \`-d\` and \`-t\`"
           usage; exit 2 ;;
       esac
     done
@@ -272,7 +284,7 @@ elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
   help
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
-    while getopts ":hlvcr:x:X:t:d:o:f:F:" opt; do
+    while getopts ":hlvcr:x:t:d:o:F:" opt; do
       case $opt in
         h)
           verbosehelp ;;
@@ -286,8 +298,6 @@ else
           setrenderer $OPTARG ;;
         x)
           sethttp $OPTARG ;;
-        X)
-          sethttp $OPTARG ;;
         d)
           canvas_domain="$OPTARG" ;;
         t)
@@ -297,8 +307,6 @@ else
         F)
           # -F opts are concatenated and
           # transparently passed to curl
-          curlopts="$curlopts -F $OPTARG" ;;
-        f)
           curlopts="$curlopts -F $OPTARG" ;;
         \?)
           echo >&2 "invalid option: \`-$OPTARG\`" && usage && exit 2 ;;
@@ -338,18 +346,5 @@ if [ -n "$outputpath" ] && [ -n "$outputrenderer" ]; then
   outputrenderer=""
 fi
 
-# START SESSION ################################################################
-# ##############################################################################
-# TODO: ERROR HANDLING
-
-JWT=""
-JWT=$(curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H "Authorization: Bearer $canvas_token" -X GET https://$canvas_domain.instructure.com/api/lti/accounts/self/jwt_token?tool_launch_url=https://lor.instructure.com/api/lti | python -c 'import sys, json; print json.load(sys.stdin)["jwt_token"]')
-
-session=""
-session=$(curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H "Content-Type: application/json" --data '{"jwt_token":"'$JWT'"}' -X POST https://lor.instructure.com/api/sessions | python -c 'import sys, json; print json.load(sys.stdin)["sessionId"]')
-
-# RUN QUERY ####################################################################
-# ##############################################################################
-
-command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H \"X-Session-ID: $session\" -X $httpmethod https://lor.instructure.com/api/$path$curlopts $outputrenderer $outputpath"
+command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H \"Authorization: Bearer $canvas_token\" -X $httpmethod https://$canvas_domain.instructure.com/api/v1/$path$curlopts $outputrenderer $outputpath"
 eval $command

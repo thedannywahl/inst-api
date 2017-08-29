@@ -1,8 +1,21 @@
 #!/bin/bash
-# arc-cli by Danny Wahl dwahl@instructure.com
-# a simple tool to help interact
-# with the arc API
-# (https://instructure.instructuremedia.com/api/docs/)
+
+# LICENSE ######################################################################
+# ##############################################################################
+#
+# Copyright 2017 Danny Wahl (danny@instructure.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 # HELPER FUNCTIONS #############################################################
 # ##############################################################################
@@ -15,7 +28,7 @@ dependency() {
 prompt() {
   declare -a dep=("$@")
   clear
-  echo >&2 "arc-cli requires ${dep[1]} (${dep[3]}) but it's not installed"
+  echo >&2 "commons-cli requires ${dep[1]} (${dep[3]}) but it's not installed"
   echo >&2 "would you like to install it now?"
   select yn in "Yes" "No"; do
     case $yn in
@@ -28,7 +41,7 @@ prompt() {
 install() {
   declare -a dep=("$@")
   clear
-  echo >&2 "arc-cli will attempt to install ${dep[1]} (${dep[3]})"
+  echo >&2 "commons-cli will attempt to install ${dep[1]} (${dep[3]})"
   hr
   if [ ${dep[3]} = "npm" ]; then
     command -v ${dep[3]} > /dev/null 2>&1 && npm install -g "${dep[1]}" || manualinstall ${dep[@]} ""
@@ -49,7 +62,7 @@ manualinstall() {
   declare -a dep=("$@")
   if [ ${#dep[@]} -gt 4 ]; then
     hr
-    echo "arc-cli was unable to install ${dep[1]} (${dep[3]})"
+    echo "commons-cli was unable to install ${dep[1]} (${dep[3]})"
     if [ ${dep[3]} = "npm" ]; then
       echo >&2 "\`npm install -g ${dep[1]}\` failed"
     elif [ ${dep[3]} = "pip" ]; then
@@ -125,12 +138,12 @@ usage() {
 }
 
 version() {
-  echo >&2 "arc-cli version 0.1"
+  echo >&2 "commons-cli version 0.1"
   exit
 }
 
 license() {
-  echo 2>&1 "LICENSE TEXT" | less
+  curl -s "https://raw.githubusercontent.com/thedannywahl/inst-api/master/LICENSE" | less
   exit
 }
 
@@ -152,7 +165,8 @@ json=("" "json" "json" "npm")
 pygments=("" "pygments" "pygmentize" "pip")
 shellgetopts=("" "getopts" "getopts" "system")
 curl=("" "curl" "curl" "system")
-dependencies=(JSON=${json[@]} PYGMENTS=${pygments[@]} SHELLGETOPTS=${shellgetopts[@]} CURL=${curl[@]})
+python=("" "python" "python" "system")
+dependencies=(JSON=${json[@]} PYGMENTS=${pygments[@]} SHELLGETOPTS=${shellgetopts[@]} CURL=${curl[@]} PYTHON=${python[@]})
 for dep in "${dependencies[@]}"
   do dependency ${dep[@]}
 done
@@ -160,28 +174,21 @@ done
 # PREF FILE ####################################################################
 # ##############################################################################
 
-arc_domain=""
-arc_email=""
-arc_password=""
+canvas_domain=""
+canvas_token=""
 readconfig() {
   if [ -f ~/.inst ]; then
     . ~/.inst
-    if [ -z $arc_domain ]; then
+    if [ -z $canvas_domain ]; then
       echo >&2 "unable to read domain from config file \`~/.inst\`"
       echo >&2 "It must be manually added or repaired.  Format:"
-      echo >&2 "arc_domain=\"<domain>\""
+      echo >&2 "canvas_domain=\"<domain>\""
       exit 2
     fi
-    if [ -z $arc_email ]; then
+    if [ -z $canvas_token ]; then
       echo >&2 "unable to read token from config file \`~/.inst\`"
       echo >&2 "It must be manually added or repaired.  Format:"
-      echo >&2 "arc_email=\"<token>\""
-      exit 2;
-    fi
-    if [ -z $arc_password ]; then
-      echo >&2 "unable to read token from config file \`~/.inst\`"
-      echo >&2 "It must be manually added or repaired.  Format:"
-      echo >&2 "arc_password=\"<token>\""
+      echo >&2 "canvas_token=\"<token>\""
       exit 2;
     fi
   else
@@ -194,7 +201,7 @@ readconfig() {
           setconfig; break ;;
         No )
           clear
-          echo >&2 "arc-cli requires a config file or use \`-d\`, \`-e\`, and \`-p\`"
+          echo >&2 "commons-cli requires a config file or use \`-d\` and \`-t\`"
           usage; exit 2 ;;
       esac
     done
@@ -205,7 +212,7 @@ setconfig() {
   clear
   echo -e "DO NOT create a config file on a shared system"
   echo >&2 "other system users will be able to authenticate using your"
-  echo >&2 "saved credentials.  Instead use the \`-d\`, \`-e\`, and \`-p\` options"
+  echo >&2 "saved credentials.  Instead use the \`-d\` and \`-t\` options"
   echo >&2 "Do you wish to proceed?"
   select ok in "Okay" "Cancel"; do
     case $ok in
@@ -213,8 +220,7 @@ setconfig() {
         touch ~/.inst
         if [ $? = 0 ]; then
           setdomain
-          setemail
-          setpassword
+          settoken
           readconfig
         else
           clear
@@ -224,7 +230,7 @@ setconfig() {
         fi; break;;
       Cancel)
         clear
-        echo >&2 "Enter your command again using the \`-d\`, \`-e\`, and \`-p\` options"
+        echo >&2 "Enter your command again using the \`-t\` and \`-d\` options"
         usage;
         exit 0;;
     esac
@@ -234,24 +240,17 @@ setconfig() {
 
 setdomain() {
   clear
-  echo >&2 "what is your arc subdomain?"
-  echo >&2 "https://<subdomain>.instructuremedia.com"
-  read arcdomain
-  echo "arc_domain=\"$arcdomain\"" >> ~/.inst
+  echo >&2 "what is your canvas subdomain?"
+  echo >&2 "https://<subdomain>.instructure.com"
+  read canvasdomain
+  echo "canvas_domain=\"$canvasdomain\"" >> ~/.inst
 }
 
-setemail() {
+settoken() {
   clear
-  echo >&2 "What is your arc login email address?"
-  read arcemail
-  echo >&2 "arc_email=\"$arcemail\"" >> ~/.inst
-}
-
-setpassword() {
-  clear
-  echo >&2 "What is your arc login password?"
-  read arcpassword
-  echo >&2 "arc_password=\"$arcpassword\"" >> ~/.inst
+  echo >&2 "please input your Canvas API token"
+  read canvastoken
+  echo >&2 "canvas_token=\"$canvastoken\"" >> ~/.inst
 }
 
 # OUTPUT FILE ##################################################################
@@ -286,7 +285,7 @@ elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
   help
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
-    while getopts ":hlvcr:x:e:p:d:o:F:" opt; do
+    while getopts ":hlvcr:x:X:t:d:o:f:F:" opt; do
       case $opt in
         h)
           verbosehelp ;;
@@ -300,17 +299,19 @@ else
           setrenderer $OPTARG ;;
         x)
           sethttp $OPTARG ;;
+        X)
+          sethttp $OPTARG ;;
         d)
-          arc_domain="$OPTARG" ;;
-        e)
-          arc_email="$OPTARG" ;;
-        p)
-          arc_password="$OPTARG" ;;
+          canvas_domain="$OPTARG" ;;
+        t)
+          canvas_token="$OPTARG" ;;
         o)
           setoutput $OPTARG;;
         F)
           # -F opts are concatenated and
           # transparently passed to curl
+          curlopts="$curlopts -F $OPTARG" ;;
+        f)
           curlopts="$curlopts -F $OPTARG" ;;
         \?)
           echo >&2 "invalid option: \`-$OPTARG\`" && usage && exit 2 ;;
@@ -338,10 +339,10 @@ fi
 # BUILD COMMAND ################################################################
 # ##############################################################################
 
-if [ -z "$arc_domain" ] && [ -z "$arc_email" ] && [ -z "$arc_password" ]; then
+if [ -z "$canvas_domain" ] && [ -z "$canvas_token" ]; then
   readconfig
-elif [ -z "$arc_domain" ] || [ -z "$arc_email" ] || [ -z "$arc_password" ]; then
-  echo >&2 "\`-d\`, \`-e\`, and \`-p\` are required when not using a config file"
+elif [ -z "$canvas_domain" ] || [ -z "$canvas_token" ]; then
+  echo >&2 "Both \`-d\` and \`-t\` are requied when not using a config file"
   usage
   exit 2
 fi
@@ -354,15 +355,14 @@ fi
 # ##############################################################################
 # TODO: ERROR HANDLING
 
+JWT=""
+JWT=$(curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H "Authorization: Bearer $canvas_token" -X GET https://$canvas_domain.instructure.com/api/lti/accounts/self/jwt_token?tool_launch_url=https://lor.instructure.com/api/lti | python -c 'import sys, json; print json.load(sys.stdin)["jwt_token"]')
+
 session=""
-userid=""
-token=""
-session=$(curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H "Content-Type: application/json" --data '{"email":"'$arc_email'","password":"'$arc_password'"}' -X POST https://$arc_domain.instructuremedia.com/api/auth/session)
-token=$(echo "$session" | python -c 'import sys, json; print json.load(sys.stdin)["session"]["token"]')
-userid=$(echo "$session" | python -c 'import sys, json; print json.load(sys.stdin)["session"]["user"]["id"]')
+session=$(curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H "Content-Type: application/json" --data '{"jwt_token":"'$JWT'"}' -X POST https://lor.instructure.com/api/sessions | python -c 'import sys, json; print json.load(sys.stdin)["sessionId"]')
 
 # RUN QUERY ####################################################################
 # ##############################################################################
 
-command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H 'Authorization: Bearer user_id=\"$userid\", token=\"$token\"' -X $httpmethod https://$arc_domain.instructuremedia.com/api/$path$curlopts $outputrenderer $outputpath"
+command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H \"X-Session-ID: $session\" -X $httpmethod https://lor.instructure.com/api/$path$curlopts $outputrenderer $outputpath"
 eval $command
