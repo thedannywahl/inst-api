@@ -1,1 +1,3 @@
 Curl wrapper for Catalog API.
+
+Usage: $0 -p :<path> [-x ::<HTTP>] [-t <token>] [-d :<domain>] [-o :<path>] [-r ::<render>] [curl opts] [-c :config]
