@@ -5,6 +5,6 @@ SYNOPSIS
     arc [options] [curl options] method
 
 DESCRIPTION
-    arc is a curl wrapper designed to simplify interacting with the arc (arcmedia.com) JSON/REST API.
+    arc is a curl wrapper designed to simplify interacting with the Arc JSON/REST API.
 
 Usage: $0 -p :<path> [-x ::<HTTP>] [-t <token>] [-d :<domain>] [-o :<path>] [-r ::<render>] [curl opts] [-c :config]
