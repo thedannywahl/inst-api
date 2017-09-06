@@ -112,7 +112,7 @@ OPTIONS
 
 METHOD
     The method is the URL path to be queried, excluding the
-    subdomain, domain and, /api/ path.
+    domain, subdomain and, /api/ path.
 
     For example if the desired query is:
     https://<domain>.instructuremedia.com/api/abacus/media/roster
@@ -128,6 +128,12 @@ METHOD
 EXAMPLES
     List caption files associated with a given media object
         arc media_management/media/<media_id>/caption_files
+
+    Get plain format of list of caption files associated with a media object
+        arc -r plain media_management/media/<media_id>/caption_files
+
+    Save output of list of caption files associated with a media object
+        arc -o ~/captions.json media_management/media/<media_id>/caption_files
 
     Search for users by name or email
         arc media_management/search_users?query=<name>
