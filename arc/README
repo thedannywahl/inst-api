@@ -144,6 +144,9 @@ EXAMPLES
     Send a password reset email
         arc -X POST -F "email=<email>" user_management/users/reset_password
 
+    Authenticate to Arc without using .inst config file
+        arc -d <domain> -e <email> -p <password> media_management/media/<id>
+
 FILES
     ~/.inst
         Config file, see -c for details.
