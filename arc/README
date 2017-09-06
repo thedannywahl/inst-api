@@ -2,7 +2,7 @@ NAME
     arc - https://www.arcmedia.com
 
 SYNOPSIS
-    arc [options] [curl options] method
+    arc [options] method
 
 DESCRIPTION
     arc-cli is a secure curl wrapper designed to simplify interacting
