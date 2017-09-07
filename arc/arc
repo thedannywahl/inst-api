@@ -138,7 +138,7 @@ usage() {
 }
 
 version() {
-  echo >&2 "arc-cli version 0.1"
+  echo >&2 "arc-cli version 0.2"
   exit
 }
 
@@ -379,3 +379,9 @@ userid=$(echo "$session" | python -c 'import sys, json; print json.load(sys.stdi
 
 command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H 'Authorization: Bearer user_id=\"$userid\", token=\"$token\"' -X $httpmethod https://$arc_domain.instructuremedia.com/api/$path$curlopts $outputrenderer $outputpath"
 eval $command
+
+# DELETE SESSION ###############################################################
+# ##############################################################################
+
+closesession="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H 'Authorization: Bearer user_id=\"$userid\", token=\"$token\"' -X DELETE https://$arc_domain.instructuremedia.com/api/auth/session"
+eval $closesession
