@@ -20,6 +20,25 @@
 # HELPER FUNCTIONS #############################################################
 # ##############################################################################
 
+logo() {
+echo '
+                  AAA
+                 AAAAA
+                AAAAAAA
+              AAAA   AAAA
+             AAA       AAA
+          AAAAAAA     AAAAAAA
+       AAAAAAAAAAAA AAAAAAAAAAAA
+    AAAAAAAA  AAAAAAAAAA  AAAAAAAAAA
+AAAAAAAAAA      AAAAAA      AAAAAAAAAAAA
+              AAAAAAAAAA
+          AAAAAAAAAAAAAAAAAA
+      AAAAAAAAAAAA  AAAAAAAAAAAAA
+  AAAAAAAAAAA            AAAAAAAAAAAAA
+AAAAAAAA                        AAAAAAAA
+'
+}
+
 dependency() {
   declare -a dep=("$@")
   command -v ${dep[2]} > /dev/null 2>&1 || prompt ${dep[@]}
@@ -138,7 +157,8 @@ usage() {
 }
 
 version() {
-  echo >&2 "arc-cli version 0.2"
+  logo
+  echo >&2 "           arc-cli version 0.2"
   exit
 }
 
