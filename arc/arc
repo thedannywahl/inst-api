@@ -391,9 +391,20 @@ session=""
 userid=""
 token=""
 session=$(curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H "Content-Type: application/json" --data '{"email":"'$arc_email'","password":"'$arc_password'"}' -X POST https://$arc_domain.instructuremedia.com/api/auth/session)
+if [ $? -gt 0 ]; then
+  echo >&2 "Unable to generate a session.  Please ensure that your credentials are accurate."
+  exit
+fi
 token=$(echo "$session" | python -c 'import sys, json; print json.load(sys.stdin)["session"]["token"]')
+if [ $? -gt 0 ]; then
+  echo >&2 "Unable to find session token."
+  exit
+fi
 userid=$(echo "$session" | python -c 'import sys, json; print json.load(sys.stdin)["session"]["user"]["id"]')
-
+if [ $? -gt 0 ]; then
+  echo >&2 "Unable to find session userid."
+  exit
+fi
 # RUN QUERY ####################################################################
 # ##############################################################################
 
