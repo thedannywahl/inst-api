@@ -150,7 +150,7 @@ verbosehelp() {
 }
 
 usage() {
-  echo -e 2>&1 "Usage: $0 ...\r\nHelp:  $0 -h"
+  echo -e 2>&1 "Usage: commons [options] method\r\nHelp:  commons -h"
 }
 
 version() {
