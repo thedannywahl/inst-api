@@ -20,6 +20,22 @@
 # HELPER FUNCTIONS #############################################################
 # ##############################################################################
 
+logo() {
+  echo '
+            CCCCCCCCC
+      CCCCCCCCCCCCCCC
+  CCCCCCCCCCC            C
+ CCCCCCCCC               CC
+CCCCCCCCCC    CCCCCCCCCCCCCCC
+CCCCCCCCC    CCCCCCCCCCCCCCCCCC
+CCCCCCCCCC    CCCCCCCCCCCCCCC
+ CCCCCCCCC               CC
+  CCCCCCCCCCC            C
+      CCCCCCCCCCCCCCC
+            CCCCCCCCC
+  '
+}
+
 dependency() {
   declare -a dep=("$@")
   command -v ${dep[2]} > /dev/null 2>&1 || prompt ${dep[@]}
@@ -138,7 +154,8 @@ usage() {
 }
 
 version() {
-  echo >&2 "commons-cli version 0.2"
+  logo
+  echo >&2 "       commons-cli version 0.2"
   exit
 }
 
@@ -353,13 +370,19 @@ fi
 
 # START SESSION ################################################################
 # ##############################################################################
-# TODO: ERROR HANDLING
 
 JWT=""
-JWT=$(curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H "Authorization: Bearer $canvas_token" -X GET https://$canvas_domain.instructure.com/api/lti/accounts/self/jwt_token?tool_launch_url=https://lor.instructure.com/api/lti | python -c 'import sys, json; print json.load(sys.stdin)["jwt_token"]')
-
 session=""
+JWT=$(curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H "Authorization: Bearer $canvas_token" -X GET https://$canvas_domain.instructure.com/api/lti/accounts/self/jwt_token?tool_launch_url=https://lor.instructure.com/api/lti | python -c 'import sys, json; print json.load(sys.stdin)["jwt_token"]')
+if [ $? -gt 0 ]; then
+  echo >&2 "Unable to generate a JSON Web Token.  Please ensure that your credentials are accurate."
+  exit 2
+fi
 session=$(curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H "Content-Type: application/json" --data '{"jwt_token":"'$JWT'"}' -X POST https://lor.instructure.com/api/sessions | python -c 'import sys, json; print json.load(sys.stdin)["sessionId"]')
+if [ $? -gt 0 ]; then
+  echo >&2 "Unable to generate a session.  Please ensure that your credentials are accurate."
+  exit 2
+fi
 
 # RUN QUERY ####################################################################
 # ##############################################################################
