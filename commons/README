@@ -18,7 +18,7 @@ OPTIONS
 
     All of the options are optional, however, some require
     that other options be set as well for example
-    -d <domain> also requires -e <email> and -p <password>
+    -d <domain> also requires -t <token> and vice versa.
 
     All options must be included before the API method.
 
@@ -83,6 +83,7 @@ OPTIONS
     -t <token>
         This option allows querying with a specified login password,
         overriding the value set in the .inst config file.
+
         -t also requires that -d <domain> be included
         in the query.  commons will not allow you to pass one
         authentication parameter and read the others from config.
