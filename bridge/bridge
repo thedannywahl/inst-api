@@ -20,6 +20,20 @@
 # HELPER FUNCTIONS #############################################################
 # ##############################################################################
 
+logo() {
+  echo '
+                      b
+                     bb
+                    bbb
+                   bbbb
+                b bbbbb
+               bb bbbbb
+             bbbb bbbbb
+         bb bbbbb bbbbb
+ bbbb bbbbb bbbbb bbbbb
+  '
+}
+
 dependency() {
   declare -a dep=("$@")
   command -v ${dep[2]} > /dev/null 2>&1 || prompt ${dep[@]}
@@ -116,7 +130,7 @@ sethttp() {
     "delete"|"DELETE")
       httpmethod="DELETE" ;;
     *)
-      echo >&2 "invalid argument \`$http\` for \`-x\`" && usage && exit 2 ;;
+      echo >&2 "invalid argument \`$http\` for \`-X\`" && usage && exit 2 ;;
   esac
 }
 
@@ -134,24 +148,18 @@ verbosehelp() {
 }
 
 usage() {
-  echo -e 2>&1 "Usage: $0 ...\r\nHelp:  $0 -h"
+  echo -e 2>&1 "Usage: bridge [options] method\r\nHelp:  bridge -h"
 }
 
 version() {
-  echo >&2 "bridge-cli version 0.1"
+  logo
+  echo >&2 " bridge-cli version 0.2"
   exit
 }
 
 license() {
   curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -X GET "https://www.apache.org/licenses/LICENSE-2.0.txt" | less
   exit
-}
-
-examples() {
-  echo >&2 "$0 courses";
-  echo >&2 "$0 -x PUT users/self/settings -F 'manual_mark_as_read=false'";
-  echo >&2 "$0 <token> DELETE <domain> users/self/activity_stream";
-  echo >&2 "$0 <token> POST <domain> users/self/files -F 'url=http://www.canvaslms.com/img/logo_instructure.png' -F 'name=instructure.png'";
 }
 
 # HANDLE DEPENDENCIES ##########################################################
@@ -284,7 +292,7 @@ elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
   help
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
-    while getopts ":hlvcr:x:t:d:o:F:" opt; do
+    while getopts ":hlvcr:X:t:d:o:F:" opt; do
       case $opt in
         h)
           verbosehelp ;;
@@ -296,7 +304,7 @@ else
           setconfig ;;
         r)
           setrenderer $OPTARG ;;
-        x)
+        X)
           sethttp $OPTARG ;;
         d)
           bridge_domain="$OPTARG" ;;
