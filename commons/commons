@@ -164,13 +164,6 @@ license() {
   exit
 }
 
-examples() {
-  echo >&2 "$0 courses";
-  echo >&2 "$0 -x PUT users/self/settings -F 'manual_mark_as_read=false'";
-  echo >&2 "$0 <token> DELETE <domain> users/self/activity_stream";
-  echo >&2 "$0 <token> POST <domain> users/self/files -F 'url=http://www.canvaslms.com/img/logo_instructure.png' -F 'name=instructure.png'";
-}
-
 # HANDLE DEPENDENCIES ##########################################################
 # Requires: jsontool (npm), pygmentize (pip), curl, and getopts                #
 # ##############################################################################
