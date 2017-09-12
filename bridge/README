@@ -41,7 +41,7 @@ OPTIONS
         overriding the value set in the .inst config file.
 
         The value only requires the subdomain string of
-        instructure.com.  E.g. if the desired domain to query
+        bridgeapp.com.  E.g. if the desired domain to query
         is https://foobar.bridgeapp.com then pass the option
         "-d foobar"
 
