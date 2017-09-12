@@ -167,13 +167,6 @@ license() {
   exit
 }
 
-examples() {
-  echo >&2 "$0 courses";
-  echo >&2 "$0 -X PUT users/self/settings -F 'manual_mark_as_read=false'";
-  echo >&2 "$0 <token> DELETE <domain> users/self/activity_stream";
-  echo >&2 "$0 <token> POST <domain> users/self/files -F 'url=http://www.canvaslms.com/img/logo_instructure.png' -F 'name=instructure.png'";
-}
-
 # HANDLE DEPENDENCIES ##########################################################
 # Requires: jsontool (npm), pygmentize (pip), curl, and getopts                #
 # ##############################################################################
@@ -319,7 +312,7 @@ elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
   help
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
-    while getopts ":hlvcr:x:e:p:d:o:F:" opt; do
+    while getopts ":hlvcr:X:e:p:d:o:F:" opt; do
       case $opt in
         h)
           verbosehelp ;;
