@@ -159,7 +159,7 @@ verbosehelp() {
 }
 
 usage() {
-  echo -e 2>&1 "Usage: $0 ...\r\nHelp:  $0 -h"
+  echo -e 2>&1 "Usage: canvas [options] method\r\nHelp:  canvas -h"
 }
 
 version() {
@@ -295,7 +295,7 @@ setoutput() {
 # PARSE OPTS ###################################################################
 # ##############################################################################
 
-curlopts=""
+formopts=""
 if [ $# -eq 0 ] && [ ! -f ~/.inst ]; then
   readconfig
   help
@@ -326,7 +326,7 @@ else
         F)
           # -F opts are concatenated and
           # transparently passed to curl
-          curlopts="$curlopts -F $OPTARG" ;;
+          formopts="$formopts -F $OPTARG" ;;
         \?)
           echo >&2 "invalid option: \`-$OPTARG\`" && usage && exit 2 ;;
         :)
@@ -365,5 +365,21 @@ if [ -n "$outputpath" ] && [ -n "$outputrenderer" ]; then
   outputrenderer=""
 fi
 
-command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H \"Authorization: Bearer $canvas_token\" -X $httpmethod https://$canvas_domain.instructure.com/api/v1/$path$curlopts $outputrenderer $outputpath"
+curlopts=""
+prefix="${path:0:5}"
+if [ $prefix == "files" ]; then
+  curlopts="-L"
+  prefix=""
+  outputrenderer=""
+  if [ -z "$outputpath" ]; then
+    echo >&2 "Downloading files requires a specified output path with \`-o\`"
+    usage
+    exit 2
+  fi
+else
+  curlopts="-H \"Authorization: Bearer $canvas_token\""
+  prefix="api/v1/"
+fi
+
+command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g $curlopts -X $httpmethod \"https://$canvas_domain.instructure.com/$prefix$path\" $formopts $outputrenderer$outputpath"
 eval $command
