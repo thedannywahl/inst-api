@@ -275,6 +275,7 @@ settoken() {
 # ##############################################################################
 
 outputpath=""
+dl=""
 setoutput() {
   if [ -f $1 ]; then
     clear
@@ -303,7 +304,7 @@ elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
   help
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
-    while getopts ":hlvcr:X:t:d:o:F:" opt; do
+    while getopts ":hlvcr:X:t:d:s:o:F:" opt; do
       case $opt in
         h)
           verbosehelp ;;
@@ -319,6 +320,9 @@ else
           sethttp $OPTARG ;;
         d)
           canvas_domain="$OPTARG" ;;
+        s)
+          setoutput $OPTARG
+          dl="true" ;;
         t)
           canvas_token="$OPTARG" ;;
         o)
@@ -367,15 +371,15 @@ fi
 
 curlopts=""
 prefix="${path:0:5}"
-if [ $prefix == "files" ]; then
+if [ $prefix != "files" ] && [ -n $"$dl" ]; then
+  echo >&2 "The save flag \`-s\` is used for downloading files from Canvas"
+  echo >&2 "Use the output flag \`-o\` to store returned JSON"
+  usage
+  exit 2
+elif [ $prefix == "files" ] && [ -n "$dl" ]; then
   curlopts="-L"
   prefix=""
   outputrenderer=""
-  if [ -z "$outputpath" ]; then
-    echo >&2 "Downloading files requires a specified output path with \`-o\`"
-    usage
-    exit 2
-  fi
 else
   curlopts="-H \"Authorization: Bearer $canvas_token\""
   prefix="api/v1/"
