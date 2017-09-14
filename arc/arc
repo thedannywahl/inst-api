@@ -304,7 +304,7 @@ setoutput() {
 # PARSE OPTS ###################################################################
 # ##############################################################################
 
-curlopts=""
+formopts=""
 if [ $# -eq 0 ] && [ ! -f ~/.inst ]; then
   readconfig
   help
@@ -337,7 +337,7 @@ else
         F)
           # -F opts are concatenated and
           # transparently passed to curl
-          curlopts="$curlopts -F $OPTARG" ;;
+          formopts="$formopts -F $OPTARG" ;;
         \?)
           echo >&2 "invalid option: \`-$OPTARG\`" && usage && exit 2 ;;
         :)
@@ -401,7 +401,7 @@ fi
 # RUN QUERY ####################################################################
 # ##############################################################################
 
-command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H 'Authorization: Bearer user_id=\"$userid\", token=\"$token\"' -X $httpmethod https://$arc_domain.instructuremedia.com/api/$path$curlopts $outputrenderer $outputpath"
+command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H 'Authorization: Bearer user_id=\"$userid\", token=\"$token\"' -X $httpmethod https://$arc_domain.instructuremedia.com/api/$path$formopts $outputrenderer $outputpath"
 eval $command
 
 # DELETE SESSION ###############################################################

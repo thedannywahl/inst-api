@@ -276,7 +276,7 @@ setoutput() {
 # PARSE OPTS ###################################################################
 # ##############################################################################
 
-curlopts=""
+formopts=""
 page=""
 if [ $# -eq 0 ] && [ ! -f ~/.inst ]; then
   readconfig
@@ -310,7 +310,7 @@ else
         F)
           # -F opts are concatenated and
           # transparently passed to curl
-          curlopts="$curlopts -F $OPTARG" ;;
+          formopts="$formopts -F $OPTARG" ;;
         \?)
           echo >&2 "invalid option: \`-$OPTARG\`" && usage && exit 2 ;;
         :)
@@ -349,5 +349,5 @@ if [ -n "$outputpath" ] && [ -n "$outputrenderer" ]; then
   outputrenderer=""
 fi
 
-command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H 'Authorization: Token token=\"$catalog_token\"' -X $httpmethod https://$catalog_domain.catalog.instructure.com/api/v1/$path$page$curlopts $outputrenderer $outputpath"
+command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H 'Authorization: Token token=\"$catalog_token\"' -X $httpmethod https://$catalog_domain.catalog.instructure.com/api/v1/$path$page$formopts $outputrenderer $outputpath"
 eval $command
