@@ -305,7 +305,7 @@ else
           catalog_token="$OPTARG" ;;
         o)
           setoutput $OPTARG ;;
-        o)
+        p)
           page="$OPTARG" ;;
         F)
           # -F opts are concatenated and
@@ -351,5 +351,5 @@ fi
 
 curlopts="--tlsv1.2 --retry 2 --retry-connrefused -s -S -g"
 
-command="curl $curlopts -H 'Authorization: Token token=\"$catalog_token\"' -X $httpmethod https://$catalog_domain.catalog.instructure.com/api/v1/$path$page$formopts $outputrenderer $outputpath"
+command="curl $curlopts -H 'Authorization: Token token=\"$catalog_token\"' -X $httpmethod \"https://$catalog_domain.catalog.instructure.com/api/v1/$path$page\" $formopts $outputrenderer $outputpath"
 eval $command

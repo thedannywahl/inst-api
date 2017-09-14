@@ -382,7 +382,9 @@ fi
 session=""
 userid=""
 token=""
-session=$(curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H "Content-Type: application/json" --data '{"email":"'$arc_email'","password":"'$arc_password'"}' -X POST https://$arc_domain.instructuremedia.com/api/auth/session)
+curlopts="--tlsv1.2 --retry 2 --retry-connrefused -s -S -g"
+
+session=$(curl $curlopts -H "Content-Type: application/json" --data '{"email":"'$arc_email'","password":"'$arc_password'"}' -X POST "https://$arc_domain.instructuremedia.com/api/auth/session")
 if [ $? -gt 0 ]; then
   echo >&2 "Unable to generate a session.  Please ensure that your credentials are accurate."
   exit 2
@@ -401,9 +403,7 @@ fi
 # BUILD COMMAND ################################################################
 # ##############################################################################
 
-curlopts="--tlsv1.2 --retry 2 --retry-connrefused -s -S -g"
-
-command="curl $curlopts -H 'Authorization: Bearer user_id=\"$userid\", token=\"$token\"' -X $httpmethod https://$arc_domain.instructuremedia.com/api/$path$formopts $outputrenderer $outputpath"
+command="curl $curlopts -H 'Authorization: Bearer user_id=\"$userid\", token=\"$token\"' -X $httpmethod \"https://$arc_domain.instructuremedia.com/api/$path\" $formopts $outputrenderer $outputpath"
 eval $command
 
 # DELETE SESSION ###############################################################

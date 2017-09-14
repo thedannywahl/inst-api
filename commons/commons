@@ -364,12 +364,13 @@ fi
 
 JWT=""
 session=""
-JWT=$(curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H "Authorization: Bearer $canvas_token" -X GET https://$canvas_domain.instructure.com/api/lti/accounts/self/jwt_token?tool_launch_url=https://lor.instructure.com/api/lti | python -c 'import sys, json; print json.load(sys.stdin)["jwt_token"]')
+curlopts="--tlsv1.2 --retry 2 --retry-connrefused -s -S -g"
+JWT=$(curl $curlopts -H "Authorization: Bearer $canvas_token" -X GET "https://$canvas_domain.instructure.com/api/lti/accounts/self/jwt_token?tool_launch_url=https://lor.instructure.com/api/lti" | python -c 'import sys, json; print json.load(sys.stdin)["jwt_token"]')
 if [ $? -gt 0 ]; then
   echo >&2 "Unable to generate a JSON Web Token.  Please ensure that your credentials are accurate."
   exit 2
 fi
-session=$(curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H "Content-Type: application/json" --data '{"jwt_token":"'$JWT'"}' -X POST https://lor.instructure.com/api/sessions | python -c 'import sys, json; print json.load(sys.stdin)["sessionId"]')
+session=$(curl $curlopts -H "Content-Type: application/json" --data '{"jwt_token":"'$JWT'"}' -X POST "https://lor.instructure.com/api/sessions" | python -c 'import sys, json; print json.load(sys.stdin)["sessionId"]')
 if [ $? -gt 0 ]; then
   echo >&2 "Unable to generate a session.  Please ensure that your credentials are accurate."
   exit 2
@@ -378,13 +379,11 @@ fi
 # BUILD COMMAND ################################################################
 # ##############################################################################
 
-curlopts="--tlsv1.2 --retry 2 --retry-connrefused -s -S -g"
-
-command="curl $curlopts -H \"X-Session-ID: $session\" -X $httpmethod https://lor.instructure.com/api/$path$formopts $outputrenderer $outputpath"
+command="curl $curlopts -H \"X-Session-ID: $session\" -X $httpmethod \"https://lor.instructure.com/api/$path\" $formopts $outputrenderer $outputpath"
 eval $command
 
 # DELETE SESSION ###############################################################
 # ##############################################################################
 
-closesession="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H \"X-Session-ID: $session\" -X GET https://lor.instructure.com/api/sessions/logout"
+closesession="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H \"X-Session-ID: $session\" -X GET \"https://lor.instructure.com/api/sessions/logout\""
 eval $closesession

@@ -362,11 +362,11 @@ if [ $path == "admin/data_dumps/download" ]; then
     usage
     exit 2
   fi
-  html=$(curl $curlopts -H "Authorization: Basic $bridge_token" https://$bridge_domain.bridgeapp.com/api/$path)
+  html=$(curl $curlopts -H "Authorization: Basic $bridge_token" "https://$bridge_domain.bridgeapp.com/api/$path")
   url=$(echo "$html" | grep -oE 'href="([^"#]+)"' | sed "s/amp;//g"| cut -f2 -d '"')
   command="curl $curlopts -X GET \"$url\" $outputpath"
 else
-  command="curl $curlopts -H \"Authorization: Basic $bridge_token\" -X $httpmethod https://$bridge_domain.bridgeapp.com/api/$path$formopts $outputrenderer $outputpath"
+  command="curl $curlopts -H \"Authorization: Basic $bridge_token\" -X $httpmethod \"https://$bridge_domain.bridgeapp.com/api/$path\" $formopts $outputrenderer $outputpath"
 fi
 
 eval $command
