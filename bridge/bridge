@@ -355,18 +355,18 @@ fi
 if [ -n "$outputpath" ] && [ -n "$outputrenderer" ]; then
   outputrenderer=""
 fi
-
+curlopts="--tlsv1.2 --retry 2 --retry-connrefused -s -S -g"
 if [ $path == "admin/data_dumps/download" ]; then
   if [ -z "$outputpath" ]; then
     echo >&2 "Downloading data dumps requires an output path with \`-o\`"
     usage
     exit 2
   fi
-  html=$(curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H "Authorization: Basic $bridge_token" -X GET https://$bridge_domain.bridgeapp.com/api/admin/data_dumps/download)
+  html=$(curl $curlopts -H "Authorization: Basic $bridge_token" https://$bridge_domain.bridgeapp.com/api/$path)
   url=$(echo "$html" | grep -oE 'href="([^"#]+)"' | sed "s/amp;//g"| cut -f2 -d '"' )
-  command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -X GET \"$url\" $outputpath"
+  command="curl $curlopts -X GET \"$url\" $outputpath"
 else
-  command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H \"Authorization: Basic $bridge_token\" -X $httpmethod https://$bridge_domain.bridgeapp.com/api/$path$formopts $outputrenderer $outputpath"
+  command="curl $curlopts -H \"Authorization: Basic $bridge_token\" -X $httpmethod https://$bridge_domain.bridgeapp.com/api/$path$formopts $outputrenderer $outputpath"
 fi
 
 eval $command
