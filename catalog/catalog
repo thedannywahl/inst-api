@@ -349,5 +349,7 @@ if [ -n "$outputpath" ] && [ -n "$outputrenderer" ]; then
   outputrenderer=""
 fi
 
-command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H 'Authorization: Token token=\"$catalog_token\"' -X $httpmethod https://$catalog_domain.catalog.instructure.com/api/v1/$path$page$formopts $outputrenderer $outputpath"
+curlopts="--tlsv1.2 --retry 2 --retry-connrefused -s -S -g"
+
+command="curl $curlopts -H 'Authorization: Token token=\"$catalog_token\"' -X $httpmethod https://$catalog_domain.catalog.instructure.com/api/v1/$path$page$formopts $outputrenderer $outputpath"
 eval $command

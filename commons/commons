@@ -375,10 +375,12 @@ if [ $? -gt 0 ]; then
   exit 2
 fi
 
-# RUN QUERY ####################################################################
+# BUILD COMMAND ################################################################
 # ##############################################################################
 
-command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H \"X-Session-ID: $session\" -X $httpmethod https://lor.instructure.com/api/$path$formopts $outputrenderer $outputpath"
+curlopts="--tlsv1.2 --retry 2 --retry-connrefused -s -S -g"
+
+command="curl $curlopts -H \"X-Session-ID: $session\" -X $httpmethod https://lor.instructure.com/api/$path$formopts $outputrenderer $outputpath"
 eval $command
 
 # DELETE SESSION ###############################################################

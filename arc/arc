@@ -398,10 +398,12 @@ if [ $? -gt 0 ]; then
   exit 2
 fi
 
-# RUN QUERY ####################################################################
+# BUILD COMMAND ################################################################
 # ##############################################################################
 
-command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H 'Authorization: Bearer user_id=\"$userid\", token=\"$token\"' -X $httpmethod https://$arc_domain.instructuremedia.com/api/$path$formopts $outputrenderer $outputpath"
+curlopts="--tlsv1.2 --retry 2 --retry-connrefused -s -S -g"
+
+command="curl $curlopts -H 'Authorization: Bearer user_id=\"$userid\", token=\"$token\"' -X $httpmethod https://$arc_domain.instructuremedia.com/api/$path$formopts $outputrenderer $outputpath"
 eval $command
 
 # DELETE SESSION ###############################################################
