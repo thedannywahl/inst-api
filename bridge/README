@@ -118,7 +118,7 @@ METHOD
 
 EXAMPLES
     Download a data dump
-        bridge admin/data_dumps/
+        bridge -o ~/data.zip admin/data_dumps/download
 
     Get plain format for a specified report
         bridge -r plain admin/reports/<report_id>
