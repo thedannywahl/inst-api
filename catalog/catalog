@@ -306,7 +306,7 @@ else
         o)
           setoutput $OPTARG ;;
         p)
-          page="$OPTARG" ;;
+          page="?page=$OPTARG" ;;
         F)
           # -F opts are concatenated and
           # transparently passed to curl
