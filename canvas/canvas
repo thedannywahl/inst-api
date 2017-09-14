@@ -382,5 +382,4 @@ else
 fi
 
 command="curl $curlopts -X $httpmethod \"https://$canvas_domain.instructure.com/$prefix$path\" $formopts $outputrenderer $outputpath"
-#eval $command
-echo "$command"
+eval $command
