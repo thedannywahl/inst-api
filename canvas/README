@@ -78,26 +78,6 @@ OPTIONS
         Plain is always used when when -o <path> is used, even if color
         is explicitly specified in the command.
 
-    -s <path>
-        This option behaves similarly to the -o flag except it denotes
-        that it is used to download a file from Canvas.  Downloading files
-        from Canvas does not use the Canvas API or token-based authentication
-        and does not return a JSON object. This option fires a special method
-        to download the file from the server.
-
-        Files downloaded from the server have this type of path:
-        /files/<id>/download?download_frd=1&verifier=<verifier>
-
-        Whereas the Files API uses the standard /api/v1/ prefix like so:
-        /api/v1/files/[:method]
-
-        The save flag forces canvas-cli to use the first command to save the
-        file. canvas-cli cannot distinguish between a file download
-        and the files API except through use of the save flag.  Trying to
-        download a file without the save flag will result in a 404 error as
-        canvas-cli will try to query /api/v1/files/download which does not
-        exist.
-
     -t <token>
         This option allows querying with a specified login password,
         overriding the value set in the .inst config file.
@@ -161,7 +141,7 @@ EXAMPLES
         canvas -d <domain> -t <token> courses
 
     Download a file
-        canvas -s <path> files/<id>/download?download_frd=1&verifier=<verifier>
+        canvas -o <path> files/<id>/download?download_frd=1&verifier=<verifier>
 
 FILES
     ~/.inst
