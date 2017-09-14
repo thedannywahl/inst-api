@@ -173,7 +173,9 @@ json=("" "json" "json" "npm")
 pygments=("" "pygments" "pygmentize" "pip")
 shellgetopts=("" "getopts" "getopts" "system")
 curl=("" "curl" "curl" "system")
-dependencies=(JSON=${json[@]} PYGMENTS=${pygments[@]} SHELLGETOPTS=${shellgetopts[@]} CURL=${curl[@]})
+sed=("" "sed" "sed" "sed")
+cut=("" "cut" "cut" "cut")
+dependencies=(JSON=${json[@]} PYGMENTS=${pygments[@]} SHELLGETOPTS=${shellgetopts[@]} CURL=${curl[@]} SED=${sed[@]} CUT=${cut[@]})
 for dep in "${dependencies[@]}"
   do dependency ${dep[@]}
 done
@@ -354,5 +356,17 @@ if [ -n "$outputpath" ] && [ -n "$outputrenderer" ]; then
   outputrenderer=""
 fi
 
-command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H \"Authorization: Basic $bridge_token\" -X $httpmethod https://$bridge_domain.bridgeapp.com/api/$path$formopts $outputrenderer $outputpath"
+if [ $path == "admin/data_dumps/download" ]; then
+  if [ -z "$outputpath" ]; then
+    echo >&2 "Downloading data dumps requires an output path with \`-o\`"
+    usage
+    exit 2
+  fi
+  html=$(curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H "Authorization: Basic $bridge_token" -X GET https://$bridge_domain.bridgeapp.com/api/admin/data_dumps/download)
+  url=$(echo "$html" | grep -oE 'href="([^"#]+)"' | sed "s/amp;//g"| cut -f2 -d '"' )
+  command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -X GET \"$url\" $outputpath"
+else
+  command="curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -H \"Authorization: Basic $bridge_token\" -X $httpmethod https://$bridge_domain.bridgeapp.com/api/$path$formopts $outputrenderer $outputpath"
+fi
+
 eval $command
