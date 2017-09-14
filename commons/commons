@@ -379,6 +379,16 @@ fi
 # BUILD COMMAND ################################################################
 # ##############################################################################
 
+if [[ $path == *"/download" ]]; then
+  if [ -z "$outputpath" ]; then
+    echo >&2 "Downloading files requires an output path with \`-o\`"
+    usage
+    exit 2
+  fi
+  curlopts="$curlopts -L"
+  outputrenderer=""
+fi
+
 command="curl $curlopts -H \"X-Session-ID: $session\" -X $httpmethod \"https://lor.instructure.com/api/$path\" $formopts $outputrenderer $outputpath"
 eval $command
 
