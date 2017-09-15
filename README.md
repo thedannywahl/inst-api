@@ -34,4 +34,4 @@ Not all scripts use all dependencies, but they will all ensure that their specif
 All commands store credentials in a dot file in your home directory, specifically `~/.inst` and they source the contents at runtime.  **DO NOT** store your tokens or credentials on a shared machine.  If security is a concern, all commands allow you to pass credentials in via options at runtime using `-t <token>` or `-p <password>`.  This allows you to use other credential managers like [vaulted](https://github.com/miquella/vaulted).  See help (`-h`) for more information with each command.
 
 ### Encryption
-All curl commands use the `--tlsv1.2` flag and all paths explicitly start with `https`.  If your machine does not support TLS v1.2, downgrade at your own risk.  Instructure products **WILL NOT** function over `http` except to redirect to `https`.  
+All `curl` commands use the `--tlsv1.2` flag and all paths explicitly start with `https`.  If your machine does not support TLS v1.2, downgrade at your own risk.  Instructure products **WILL NOT** function over `http` except to redirect to `https`.  
