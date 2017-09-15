@@ -13,7 +13,7 @@ brew install inst-api
 [Download](https://github.com/thedannywahl/inst-api/releases) or clone the latest release and symlink the scripts to a location supported in your `$PATH`
 
 ## Dependencies
-The included scripts the following dependencies.  The scripts will attempt to install `npm` and `pip` dependencies if they're not found. System or built-in commands must be installed by the user.
+The included scripts require the following dependencies.  The scripts will attempt to install `npm` and `pip` dependencies if they're not found. System or built-in commands must be installed by the user.
 
 Not all scripts use all dependencies, but they will all ensure that their specific dependencies are met. E.g. `bridge` requires `python` but `canvas` does not, therefore `canvas` will not check for `python`.
 
