@@ -1,5 +1,3 @@
-Elaborate curl wrappers for Instructure product APIs.
-
 ## Installation
 
 ### Homebrew
