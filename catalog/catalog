@@ -20,6 +20,31 @@
 # HELPER FUNCTIONS #############################################################
 # ##############################################################################
 
+logo() {
+  echo '
+           CCCCCCCCCCCC
+      C     CCCCCCCCCC     C
+     CCC     CCCCCCCC     CCC
+    CCCCC       CC       CCCCC
+   CCCCCC                CCCCCC
+                CC
+C         CC          CC         C
+CCC                            CCC
+CCCC                          CCCC
+CCCCC   C                C   CCCCC
+CCCCC   C                C   CCCCC
+CCCC                          CCCC
+CCC                            CCC
+C         CC          CC         C
+                CC
+   CCCCCC                CCCCCC
+    CCCCC       CC       CCCCC
+     CCC     CCCCCCCC     CCC
+      C     CCCCCCCCCC     C
+           CCCCCCCCCCCC
+  '
+}
+
 dependency() {
   declare -a dep=("$@")
   command -v ${dep[2]} > /dev/null 2>&1 || prompt ${dep[@]}
@@ -134,11 +159,12 @@ verbosehelp() {
 }
 
 usage() {
-  echo -e 2>&1 "Usage: $0 ...\r\nHelp:  $0 -h"
+  echo -e 2>&1 "Usage: catalog [options] method\r\nHelp:  catalog -h"
 }
 
 version() {
-  echo >&2 "catalog-cli version 0.1"
+  logo
+  echo >&2 "      catalog-cli version 0.2"
   exit
 }
 
