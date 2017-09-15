@@ -15,11 +15,14 @@ brew install inst-api
 ## Dependencies
 Your system needs the following dependencies.  The programs will attempt to install `npm` and `pip` dependencies on first run if they're not found. System or built-in commands must be installed by the user.
 
+Not all scripts use all dependencies, but they will all ensure that their specific dependencies are met.
+
 ### System / Built-in
 * [curl](https://curl.haxx.se/)
 * [sed](https://www.gnu.org/software/sed/)
 * [cut](http://pubs.opengroup.org/onlinepubs/9699919799/utilities/cut.html)
 * [getopts](http://pubs.opengroup.org/onlinepubs/9699919799/utilities/getopts.html)
+* [python](https://www.python.org/)
 
 ### External
 * [json](https://www.npmjs.com/package/json) ([npm](https://www.npmjs.com/))
