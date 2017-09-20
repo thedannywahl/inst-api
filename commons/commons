@@ -155,7 +155,7 @@ usage() {
 
 version() {
   logo
-  echo >&2 "     commons-cli version 0.2.2"
+  echo >&2 "     commons-cli version 0.2.3"
   exit
 }
 
