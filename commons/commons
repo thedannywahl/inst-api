@@ -62,7 +62,7 @@ install() {
   if [ ${dep[3]} = "npm" ]; then
     command -v ${dep[3]} > /dev/null 2>&1 && npm install -g "${dep[1]}" || manualinstall ${dep[@]} ""
   elif [ ${dep[3]} = "pip" ]; then
-    command -v ${dep[3]} > /dev/null 2>&1 && pip install "${dep[1]}" || manualinstall ${dep[@]} ""
+    command -v ${dep[3]} > /dev/null 2>&1 && pip2 install "${dep[1]}" || manualinstall ${dep[@]} ""
   else
     manualinstall ${dep[@]} ""
   fi
@@ -82,7 +82,7 @@ manualinstall() {
     if [ ${dep[3]} = "npm" ]; then
       echo >&2 "\`npm install -g ${dep[1]}\` failed"
     elif [ ${dep[3]} = "pip" ]; then
-      echo >&2 "\`pip install ${dep[1]}\` failed"
+      echo >&2 "\`pip2 install ${dep[1]}\` failed"
     else
       echo >&2 "\`curl\` is a system package"
     fi
@@ -90,7 +90,7 @@ manualinstall() {
   if [ ${dep[3]} = "npm" ]; then
     echo >&2 "Try using \`npm install -g ${dep[1]}\` to manually install"
   elif [ ${dep[3]} = "pip" ]; then
-    echo >&2 "Try using \`pip install ${dep[1]}\` to manually install"
+    echo >&2 "Try using \`pip2 install ${dep[1]}\` to manually install"
   else
     echo >&2 "${dep[1]} must be installed using a system package manager"
   fi
