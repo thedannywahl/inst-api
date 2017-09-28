@@ -22,15 +22,17 @@
 
 logo() {
   echo '
-                      b
-                     bb
-                    bbb
-                   bbbb
-                b bbbbb
-               bb bbbbb
-             bbbb bbbbb
-         bb bbbbb bbbbb
- bbbb bbbbb bbbbb bbbbb
+BBBBBBBBBBBBBBBBBBBBBBBBBB
+BBBBBBBBBBBBBBBBBBBBBBB BB
+BBBBBBBBBBBBBBBBBBBBBB  BB
+BBBBBBBBBBBBBBBBBBBBB   BB
+BBBBBBBBBBBBBBBBBBBB    BB
+BBBBBBBBBBBBBBBBB B     BB
+BBBBBBBBBBBBBBBB  B     BB
+BBBBBBBBBBBBBB    B     BB
+BBBBBBBBBB  B     B     BB
+BB    B     B     B     BB
+BBBBBBBBBBBBBBBBBBBBBBBBBB
   '
 }
 
