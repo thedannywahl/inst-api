@@ -21,6 +21,12 @@ OPTIONS
 
     All options must be included before the API method.
 
+    -a
+        This option gets all pages of results for the specified
+        method.  By default only the first page is queried.
+
+        This option only works when the httpmethod (-X) is set to "GET"
+
     -c
         This option runs the canvas configuration and stores the
         domain, email, and password in the preference file
@@ -65,6 +71,28 @@ OPTIONS
 
         When an output is specified, canvas will always set the output
         rendered to "plain", even if it is explicitly specified.
+
+    -p <page>
+        This option allows you to query starting at a specific page.
+        For example -p 2 will start at page 2.  This defaults to
+        page 1 if not set.  This can be used with the all option. For
+        example -a -p 3 will query all results, starting with page 3.
+
+        This option only works when the httpmethod (-X) is set to "GET"
+
+    -q <quantity>
+        This option allows you to set the per_page value of the query.
+        The default is 10 if this is not set.  The max value is 100, if
+        a value greater than 100 is selected, this will revert to 100.
+        This option will affect the numer of pages returned or the values
+        returned by the -a or -p <page> option.  For example, if there are
+        100 records by default -a will return 10 pages of results.  If the
+        option is set to -q 50 then only 2 pages of results will be returned.
+
+        When performing multiple queries it is recommended to set -q <quantity>
+        to a higher value to avoid being rate limited.
+
+        This option only works when the httpmethod (-X) is set to "GET"
 
     -r <renderer>
         This option allows you to specify the render method of the
@@ -142,6 +170,9 @@ EXAMPLES
 
     Download a file
         canvas -o <path> files/<id>/download?download_frd=1&verifier=<verifier>
+
+    Get all the courses for a user, 50 courses per page
+        canvas -a -q 50 courses
 
 FILES
     ~/.inst
