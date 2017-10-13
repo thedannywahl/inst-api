@@ -21,6 +21,10 @@ OPTIONS
 
     All options must be included before the API method.
 
+    -a
+        This option gets all pages of results for the specified
+        method.  By default only the first page is queried.
+
     -c
         This option runs the catalog configuration and stores the
         domain, email, and password in the preference file
@@ -67,7 +71,26 @@ OPTIONS
         rendered to "plain", even if it is explicitly specified.
 
     -p <page>
-        This option allows you to specify which page of results to return.
+        This option allows you to query starting at a specific page.
+        For example -p 2 will start at page 2.  This defaults to
+        page 1 if not set.  This can be used with the all option. For
+        example -a -p 3 will query all results, starting with page 3.
+
+        This option only works when the httpmethod (-X) is set to "GET"
+
+    -q <quantity>
+        This option allows you to set the per_page value of the query.
+        The default is 10 if this is not set.  The max value is 100, if
+        a value greater than 100 is selected, this will revert to 100.
+        This option will affect the numer of pages returned or the values
+        returned by the -a or -p <page> option.  For example, if there are
+        100 records by default -a will return 10 pages of results.  If the
+        option is set to -q 50 then only 2 pages of results will be returned.
+
+        When performing multiple queries it is recommended to set -q <quantity>
+        to a higher value to avoid being rate limited.
+
+        This option only works when the httpmethod (-X) is set to "GET"
 
     -r <renderer>
         This option allows you to specify the render method of the
@@ -130,7 +153,7 @@ EXAMPLES
         catalog -o ~/enrollments.json -F "listing_id=<course_id>" enrollments
 
     List additional results (default 20, max 100)
-        catalog courses?per_page=<integer>
+        catalog -q <integer> courses
 
     Delete a specific program
         catalog -X DELETE programs/<program_id>
@@ -140,6 +163,9 @@ EXAMPLES
 
     Authenticate to catalog without using .inst config file
         catalog -d <domain> -t <token> courses
+
+    Get all the courses for a user, 50 courses per page
+        catalog -a -q 50 courses
 
 FILES
     ~/.inst
