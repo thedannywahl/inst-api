@@ -145,6 +145,8 @@ sethttp() {
   esac
 }
 
+curlopts="--tlsv1.2 --retry 2 --retry-connrefused -s -S -g"
+
 # HELP STUFF ###################################################################
 # ##############################################################################
 
@@ -154,7 +156,7 @@ help() {
 }
 
 verbosehelp() {
-  curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -X GET "https://raw.githubusercontent.com/thedannywahl/inst-api/master/catalog/README" | less
+  curl $curlopts -X GET "https://raw.githubusercontent.com/thedannywahl/inst-api/master/catalog/README" | less
   exit;
 }
 
@@ -164,12 +166,12 @@ usage() {
 
 version() {
   logo
-  echo >&2 "     catalog-cli version 0.2.3"
+  echo >&2 "    catalog-cli version 0.3.0"
   exit
 }
 
 license() {
-  curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -X GET "https://www.apache.org/licenses/LICENSE-2.0.txt" | less
+  curl $curlopts -X GET "https://www.apache.org/licenses/LICENSE-2.0.txt" | less
   exit
 }
 
@@ -299,6 +301,64 @@ setoutput() {
     outputpath="> $1"
   fi
 }
+
+# PAGINATION ###################################################################
+# ##############################################################################
+
+query="?"
+setquery() {
+  if [[ $path == *"?"* ]]; then
+    query="&"
+  fi
+}
+
+pageint=1
+nextpage() {
+  pageint=$((pageint+1))
+  setpage $pageint
+}
+
+page=$query"page="$pageint
+setpage() {
+  page=$query"page="$1
+}
+
+perpage="&per_page=20"
+setcount() {
+  if [ $1 -gt 100 ]; then
+    perpage=100
+  else
+    perpage=$1
+  fi
+  perpage="&per_page="$perpage
+}
+
+getpages() {
+  shopt -s extglob
+  while IFS=':' read key value; do
+      value=${value##+([[:space:]])}; value=${value%%+([[:space:]])}
+      case "$key" in
+          Link) link="$value";;
+       esac
+  done < <(eval $1)
+  IFS=',' read -r -a link <<< "$link"
+  for index in "${!link[@]}"
+  do
+    if [[ ${link[index]} == *"last"* ]]; then
+      link=${link[index]}
+      break
+    fi
+  done
+  link=${link##*\?}
+  for val in ${link//&/ };do
+    key=( ${val/=/ } )
+    k=${key[0]}
+    if [ $k == 'page' ]; then
+      pagecount=${key[1]}
+    fi
+  done
+}
+
 # PARSE OPTS ###################################################################
 # ##############################################################################
 
@@ -311,7 +371,7 @@ elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
   help
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
-    while getopts ":hlvcr:x:t:d:o:p:F:" opt; do
+    while getopts ":hlvcar:X:t:d:o:p:q:F:" opt; do
       case $opt in
         h)
           verbosehelp ;;
@@ -323,7 +383,7 @@ else
           setconfig ;;
         r)
           setrenderer $OPTARG ;;
-        x)
+        X)
           sethttp $OPTARG ;;
         d)
           catalog_domain="$OPTARG" ;;
@@ -331,11 +391,13 @@ else
           catalog_token="$OPTARG" ;;
         o)
           setoutput $OPTARG ;;
+        a)
+          getpages=true ;;
+        q)
+          setcount $OPTARG ;;
         p)
-          page="?page=$OPTARG" ;;
+          pageint="$OPTARG" ;;
         F)
-          # -F opts are concatenated and
-          # transparently passed to curl
           formopts="$formopts -F $OPTARG" ;;
         \?)
           echo >&2 "invalid option: \`-$OPTARG\`" && usage && exit 2 ;;
@@ -375,7 +437,29 @@ if [ -n "$outputpath" ] && [ -n "$outputrenderer" ]; then
   outputrenderer=""
 fi
 
-curlopts="--tlsv1.2 --retry 2 --retry-connrefused -s -S -g"
+setquery
+setpage $pageint
 
-command="curl $curlopts -H 'Authorization: Token token=\"$catalog_token\"' -X $httpmethod \"https://$catalog_domain.catalog.instructure.com/api/v1/$path$page\" $formopts $outputrenderer $outputpath"
-eval $command
+curlopts="$curlopts -H 'Authorization: Token token=\"$catalog_token\"'"
+
+pagecount=1
+if [ "$getpages" = true ] && [ "$httpmethod" == "GET" ]; then
+  command="curl $curlopts -I -X $httpmethod \"https://$catalog_domain.catalog.instructure.com/api/v1/$path$page$perpage\""
+  getpages "$command"
+fi
+
+if [ $httpmethod != "GET" ]; then
+  perpage=""
+  page=""
+  pagecount=1
+fi
+
+while
+  command="curl $curlopts -X $httpmethod \"https://$catalog_domain.catalog.instructure.com/api/v1/$path$page$perpage\" $formopts $outputrenderer $outputpath"
+  #eval $command
+  #echo $command
+  (( $pageint < $pagecount ))
+do
+  nextpage
+  continue
+done
