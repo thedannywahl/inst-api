@@ -453,6 +453,7 @@ if [ "$getpages" = true ] && [ "$httpmethod" == "GET" ] && [ "$prefix" == "api/v
   command="curl $curlopts -I -X $httpmethod \"https://$canvas_domain.instructure.com/$prefix$path$page$perpage\""
   getpages "$command"
 fi
+
 while
   command="curl $curlopts -X $httpmethod \"https://$canvas_domain.instructure.com/$prefix$path$page$perpage\" $formopts $outputrenderer $outputpath"
   eval $command
