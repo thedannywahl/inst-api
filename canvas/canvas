@@ -334,10 +334,17 @@ getpages() {
   while IFS=':' read key value; do
       value=${value##+([[:space:]])}; value=${value%%+([[:space:]])}
       case "$key" in
-          Link) link="$value" ;;
+          Link) link="$value";;
        esac
   done < <(eval $1)
-  link=${link##*,}
+  IFS=',' read -r -a link <<< "$link"
+  for index in "${!link[@]}"
+  do
+    if [[ ${link[index]} == *"last"* ]]; then
+      link=${link[index]}
+      break
+    fi
+  done
   link=${link##*\?}
   for val in ${link//&/ };do
     key=( ${val/=/ } )
