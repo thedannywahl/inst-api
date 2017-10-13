@@ -428,12 +428,6 @@ fi
 setquery
 setpage $pageint
 
-if [ $httpmethod != "GET" ]; then
-  perpage=""
-  page=""
-  pagecount=1
-fi
-
 prefix=""
 if [ "${path:0:5}" == "files" ] && [[ $path == *"download_frd=1"* ]]; then
   if [ -z "$outputpath" ]; then
@@ -452,6 +446,12 @@ pagecount=1
 if [ "$getpages" = true ] && [ "$httpmethod" == "GET" ] && [ "$prefix" == "api/v1/" ]; then
   command="curl $curlopts -I -X $httpmethod \"https://$canvas_domain.instructure.com/$prefix$path$page$perpage\""
   getpages "$command"
+fi
+
+if [ $httpmethod != "GET" ]; then
+  perpage=""
+  page=""
+  pagecount=1
 fi
 
 while
