@@ -95,6 +95,10 @@ OPTIONS
         Plain is always used when when -o <path> is used, even if color
         is explicitly specified in the command.
 
+    -s
+        This command will output the complete curl command in a readable
+        format.  It will not execute the command.
+
     -X <HTTP method>
         This option specifies the request method to be used by
         the command.  Available options are:

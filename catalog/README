@@ -39,7 +39,6 @@ OPTIONS
         catalog_domain="<domain>"
         catalog_token="<token>"
 
-
     -d <domain>
         This option allows querying a specified domain,
         overriding the value set in the .inst config file.
@@ -103,6 +102,10 @@ OPTIONS
 
         Plain is always used when when -o <path> is used, even if color
         is explicitly specified in the command.
+
+    -s
+        This command will output the complete curl command in a readable
+        format.  It will not execute the command.
 
     -t <token>
         This option allows querying with a specified login password,

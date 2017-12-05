@@ -111,7 +111,7 @@ setrenderer() {
   local renderer="$1"
   case $renderer in
     "plain")
-      outputrenderer="; echo -e \"\n\"" ;;
+      outputrenderer="" ;;
     "color")
       outputrenderer="| json | pygmentize -l json" ;;
     *)
@@ -155,7 +155,7 @@ usage() {
 
 version() {
   logo
-  echo >&2 "     commons-cli version 0.2.3"
+  echo >&2 "     commons-cli version 0.3.1"
   exit
 }
 
@@ -295,7 +295,7 @@ elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
   help
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
-    while getopts ":hlvcr:x:X:t:d:o:f:F:" opt; do
+    while getopts ":hlvcsr:x:X:t:d:o:f:F:" opt; do
       case $opt in
         h)
           verbosehelp ;;
@@ -305,6 +305,8 @@ else
           version ;;
         c)
           setconfig ;;
+        s)
+          sample=true ;;
         r)
           setrenderer $OPTARG ;;
         x)
@@ -390,7 +392,11 @@ if [[ $path == *"/download" ]]; then
 fi
 
 command="curl $curlopts -H \"X-Session-ID: $session\" -X $httpmethod \"https://lor.instructure.com/api/$path\" $formopts $outputrenderer $outputpath"
-eval $command
+if [ "$sample" = true ]; then
+  echo "$command"
+else
+  eval $command
+fi
 
 # DELETE SESSION ###############################################################
 # ##############################################################################

@@ -120,7 +120,7 @@ setrenderer() {
   local renderer="$1"
   case $renderer in
     "plain")
-      outputrenderer="; echo -e \"\n\"" ;;
+      outputrenderer="" ;;
     "color")
       outputrenderer="| json | pygmentize -l json" ;;
     *)
@@ -166,7 +166,7 @@ usage() {
 
 version() {
   logo
-  echo >&2 "    catalog-cli version 0.3.0"
+  echo >&2 "    catalog-cli version 0.3.1"
   exit
 }
 
@@ -371,7 +371,7 @@ elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
   help
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
-    while getopts ":hlvcar:X:t:d:o:p:q:F:" opt; do
+    while getopts ":hlvcasr:X:t:d:o:p:q:F:" opt; do
       case $opt in
         h)
           verbosehelp ;;
@@ -393,6 +393,8 @@ else
           setoutput $OPTARG ;;
         a)
           getpages=true ;;
+        s)
+          sample=true ;;
         q)
           setcount $OPTARG ;;
         p)
@@ -456,8 +458,11 @@ fi
 
 while
   command="curl $curlopts -X $httpmethod \"https://$catalog_domain.catalog.instructure.com/api/v1/$path$page$perpage\" $formopts $outputrenderer $outputpath"
-  #eval $command
-  #echo $command
+  if [ "$sample" = true ]; then
+    echo "$command"
+  else
+    eval $command
+  fi
   (( $pageint < $pagecount ))
 do
   nextpage

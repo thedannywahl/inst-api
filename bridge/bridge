@@ -111,7 +111,7 @@ setrenderer() {
   local renderer="$1"
   case $renderer in
     "plain")
-      outputrenderer="; echo -e \"\n\"" ;;
+      outputrenderer="" ;;
     "color")
       outputrenderer="| json | pygmentize -l json" ;;
     *)
@@ -155,7 +155,7 @@ usage() {
 
 version() {
   logo
-  echo >&2 "bridge-cli version 0.2.3"
+  echo >&2 "bridge-cli version 0.3.1"
   exit
 }
 
@@ -296,7 +296,7 @@ elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
   help
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
-    while getopts ":hlvcr:X:t:d:o:F:" opt; do
+    while getopts ":hlvcsr:X:t:d:o:F:" opt; do
       case $opt in
         h)
           verbosehelp ;;
@@ -306,6 +306,8 @@ else
           version ;;
         c)
           setconfig ;;
+        s)
+          sample=true ;;
         r)
           setrenderer $OPTARG ;;
         X)
@@ -370,5 +372,8 @@ if [ $path == "admin/data_dumps/download" ]; then
 else
   command="curl $curlopts -H \"Authorization: Basic $bridge_token\" -X $httpmethod \"https://$bridge_domain.bridgeapp.com/api/$path\" $formopts $outputrenderer $outputpath"
 fi
-
-eval $command
+if [ "$sample" = true ]; then
+  echo "$command"
+else
+  eval $command
+fi
