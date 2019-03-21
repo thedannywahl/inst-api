@@ -161,12 +161,12 @@ verbosehelp() {
 }
 
 usage() {
-  echo -e 2>&1 "Usage: canvas [options] method\r\nHelp:  canvas -h"
+  echo -e 2>&1 "Usage: canvas [options] method\r\nHelp: canvas -h"
 }
 
 version() {
   logo
-  echo >&2 "      canvas-cli version 0.3.1"
+  echo >&2 "      canvas-cli version 0.3.2"
   exit
 }
 
@@ -424,6 +424,10 @@ fi
 
 if [ -z "$canvas_domain" ] && [ -z "$canvas_token" ]; then
   readconfig
+elif [ $canvas_domain = "beta" ] || [ $canvas_domain = "test" ]; then
+  sd=$canvas_domain
+  readconfig
+  canvas_domain="$canvas_domain.$sd"
 elif [ -z "$canvas_domain" ] || [ -z "$canvas_token" ]; then
   echo >&2 "Both \`-d\` and \`-t\` are requied when not using a config file"
   usage
