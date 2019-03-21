@@ -43,14 +43,23 @@ OPTIONS
         This option allows querying a specified domain,
         overriding the value set in the .inst config file.
 
+        A helper is provided for "beta", reserving it for use with
+        the domain provided in the .inst config file.  Using the
+        reserved word  will not require the -t option to be included
+        as described below. E.g. the config file has the a stored
+        token and a value for canvas_domain of "foobar", in
+        order to connect to https://foobar.beta.instructure.com
+        simply use "-d beta"
+
         The value only requires the subdomain string of
         catalogapp.com.  E.g. if the desired domain to query
         is https://foobar.catalog.instructure.com then pass the option
         "-d foobar"
 
         -d also requires that -t <token> be included
-        in the query.  catalog will not allow you to pass one
-        authentication parameter and read the others from config.
+        in the query unless the value of -d is "beta".
+        canvas will not allow you to pass one authentication
+        parameter and read the others from config.
 
     -F <name=content>
         The Form option transparently passes to curl.  Please read

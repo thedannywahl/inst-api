@@ -166,20 +166,13 @@ usage() {
 
 version() {
   logo
-  echo >&2 "    catalog-cli version 0.3.1"
+  echo >&2 "    catalog-cli version 0.3.2"
   exit
 }
 
 license() {
   curl $curlopts -X GET "https://www.apache.org/licenses/LICENSE-2.0.txt" | less
   exit
-}
-
-examples() {
-  echo >&2 "$0 courses";
-  echo >&2 "$0 -x PUT users/self/settings -F 'manual_mark_as_read=false'";
-  echo >&2 "$0 <token> DELETE <domain> users/self/activity_stream";
-  echo >&2 "$0 <token> POST <domain> users/self/files -F 'url=http://www.canvaslms.com/img/logo_instructure.png' -F 'name=instructure.png'";
 }
 
 # HANDLE DEPENDENCIES ##########################################################
@@ -429,7 +422,11 @@ fi
 
 if [ -z "$catalog_domain" ] && [ -z "$catalog_token" ]; then
   readconfig
-elif [ -z "$catalog_domain" ] || [ -z "$catalog_token" ]; then
+elif [ $catalog_domain = "beta" ]; then
+  sd=$catalog_domain
+  readconfig
+  canvas_domain="$catalog_domain.$sd"
+elif [ -z "$catalog_domain" ] || [ -z "$catalog_domain" ]; then
   echo >&2 "Both \`-d\` and \`-t\` are requied when not using a config file"
   usage
   exit 2
