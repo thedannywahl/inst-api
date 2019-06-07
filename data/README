@@ -1,0 +1,157 @@
+NAME
+    cdata - https://instructure.com/canvas
+
+SYNOPSIS
+    cdata [options] method
+
+DESCRIPTION
+    canvas-data-cli is a secure curl wrapper designed to simplify interacting
+    with the canvas data JSON/REST API.
+
+    canvas-data-cli automatically authenticates users based on credentials stored
+    in the config file or on values passed at runtime.
+
+OPTIONS
+    Options start with a single dash and many options require
+    a value after them.
+
+    All of the options are optional, however, some require
+    that other options be set as well for example
+    -d <domain> also requires -t <token> and vice versa.
+
+    All options must be included before the API method.
+
+    -a
+        This option retrieves dumps only after the specified
+        sequence number.
+
+    -c
+        This option runs the canvas data configuration and stores the
+        key, and secret in the preference file located at ~/.inst
+
+        If no preference file is detected on first run, the
+        configuration process will automatically run.  This option
+        is mainly for adding canvas if other Instructure APIs have
+        already been used, such as studio or canvas.
+
+        cdata config stores the following values in ~/.inst:
+        data_secret="<secret>"
+        data_key="<key>"
+
+    -d
+        Download referenced dumps in the response.
+
+        -d also requires that -o <path> be included in the query.
+
+    -h
+        Usage help.  This lists all the available options with
+        descriptions and examples.
+
+    -k
+        This option allows you to pass a canvas data key instead of
+        using one stored in the config file.
+
+        -k also requires that -m <secret> be included in the query.
+        cdata will not allow you to pass one authentication parameter
+        and read the others from config.
+
+    -l
+        License information.
+
+    -m
+        This option allows you to pass a canvas data secret instead of
+        using one stored in the config file.
+
+        -m also requires that -k <key> be included in the query.
+        cdata will not allow you to pass one authentication parameter
+        and read the others from config.
+
+    -o <path>
+        This option outputs the return to a specified path and/or file.
+
+        When used with -d the path must be a directory.
+
+        When an output is specified, cdata will always set the output
+        rendered to "plain", even if it is explicitly specified.
+
+    -q <quantity>
+        This option allows you to set the limit value of the number
+        of dumps to retrieve. The default is 50 if this is not set.
+
+        When performing multiple queries it is recommended to set -q <quantity>
+        to a higher value to avoid being rate limited.
+
+    -r <renderer>
+        This option allows you to specify the render method of the
+        the return from canvas.  Available options are:
+
+        "color" (default) This will use json (npm) to format the
+        return and will use pygmentize (pip) to color the return.
+
+        "plain" This option will return the raw JSON object unformatted.
+
+        Plain is always used when when -o <path> is used, even if color
+        is explicitly specified in the command.
+
+    -s
+        This command will output the complete curl command in a readable
+        format.  It will not execute the command.
+
+    -v
+        Version information.
+
+METHOD
+    The method is the URL path to be queried, excluding the
+    domain, subdomain and, /api/account/self/ path.
+
+    For example if the desired query is:
+    https://portal.inshosteddata.com/api/account/self/dump
+    The method is simply:
+    dump
+
+    The method can be quoted without issue in the event that
+    the current shell has issues with query parameters.
+    For example when filtering dumps you can use:
+
+    cdata "dump?after=<integer>&limit=<integer>"
+
+EXAMPLES
+    Get the latest schema
+        cdata schema/latest
+
+    Get plain format list of files for a specified table
+        cdata -r plain file/byTable/wiki_page_fact
+
+    Save output of dumps for a specified quantity
+        cdata -o ~/dumps.json -q 2 dump
+
+    Authenticate to cdata without using .inst config file
+        cdata -m <secret> -k <key> files/latest
+
+    Download the latest dump files
+        cdata -o <path> -d files/latest
+
+FILES
+    ~/.inst
+        Config file, see -c for details.
+
+EXIT CODES
+    1   Unable to overwrite specified output file
+        (or user canceled overwrite)
+
+    2   Invalid option or missing argument
+
+    127 Missing dependency
+
+        Unspecified exit codes, or an exit code of 0 represent
+        a successful command.
+
+WWW
+    https://www.instructure.com/canvas
+        Instructure home page for the canvas application.
+
+    https://portal.inshosteddata.com/docs/api
+        API documentation for the canvas data application.
+
+    https://github.com/thedannywahl/inst-api
+        Software repository for canvas-data-cli.
