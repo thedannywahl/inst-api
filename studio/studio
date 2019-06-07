@@ -47,7 +47,7 @@ dependency() {
 prompt() {
   declare -a dep=("$@")
   clear
-  echo >&2 "arc-cli requires ${dep[1]} (${dep[3]}) but it's not installed"
+  echo >&2 "studio-cli requires ${dep[1]} (${dep[3]}) but it's not installed"
   echo >&2 "would you like to install it now?"
   select yn in "Yes" "No"; do
     case $yn in
@@ -60,7 +60,7 @@ prompt() {
 install() {
   declare -a dep=("$@")
   clear
-  echo >&2 "arc-cli will attempt to install ${dep[1]} (${dep[3]})"
+  echo >&2 "studio-cli will attempt to install ${dep[1]} (${dep[3]})"
   hr
   if [ ${dep[3]} = "npm" ]; then
     command -v ${dep[3]} > /dev/null 2>&1 && npm install -g "${dep[1]}" || manualinstall ${dep[@]} ""
@@ -81,7 +81,7 @@ manualinstall() {
   declare -a dep=("$@")
   if [ ${#dep[@]} -gt 4 ]; then
     hr
-    echo "arc-cli was unable to install ${dep[1]} (${dep[3]})"
+    echo "studio-cli was unable to install ${dep[1]} (${dep[3]})"
     if [ ${dep[3]} = "npm" ]; then
       echo >&2 "\`npm install -g ${dep[1]}\` failed"
     elif [ ${dep[3]} = "pip" ]; then
@@ -148,17 +148,17 @@ help() {
 }
 
 verbosehelp() {
-  curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -X GET "https://raw.githubusercontent.com/thedannywahl/inst-api/master/arc/README" | less
+  curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g -X GET "https://raw.githubusercontent.com/thedannywahl/inst-api/master/studio/README" | less
   exit;
 }
 
 usage() {
-  echo -e 2>&1 "Usage: arc [options] method\r\nHelp:  arc -h"
+  echo -e 2>&1 "Usage: studio [options] method\r\nHelp:  studio -h"
 }
 
 version() {
   logo
-  echo >&2 "          arc-cli version 0.3.1"
+  echo >&2 "       studio-cli version 0.3.1"
   exit
 }
 
@@ -186,28 +186,28 @@ done
 # PREF FILE ####################################################################
 # ##############################################################################
 
-arc_domain=""
-arc_email=""
-arc_password=""
+studio_domain=""
+studio_email=""
+studio_password=""
 readconfig() {
   if [ -f ~/.inst ]; then
     . ~/.inst
-    if [ -z $arc_domain ]; then
+    if [ -z $studio_domain ]; then
       echo >&2 "unable to read domain from config file \`~/.inst\`"
       echo >&2 "It must be manually added or repaired.  Format:"
-      echo >&2 "arc_domain=\"<domain>\""
+      echo >&2 "studio_domain=\"<domain>\""
       exit 2
     fi
-    if [ -z $arc_email ]; then
+    if [ -z $studio_email ]; then
       echo >&2 "unable to read token from config file \`~/.inst\`"
       echo >&2 "It must be manually added or repaired.  Format:"
-      echo >&2 "arc_email=\"<token>\""
+      echo >&2 "studio_email=\"<token>\""
       exit 2;
     fi
-    if [ -z $arc_password ]; then
+    if [ -z $studio_password ]; then
       echo >&2 "unable to read token from config file \`~/.inst\`"
       echo >&2 "It must be manually added or repaired.  Format:"
-      echo >&2 "arc_password=\"<token>\""
+      echo >&2 "studio_password=\"<token>\""
       exit 2;
     fi
   else
@@ -220,7 +220,7 @@ readconfig() {
           setconfig; break ;;
         No )
           clear
-          echo >&2 "arc-cli requires a config file or use \`-d\`, \`-e\`, and \`-p\`"
+          echo >&2 "studio-cli requires a config file or use \`-d\`, \`-e\`, and \`-p\`"
           usage; exit 2 ;;
       esac
     done
@@ -260,24 +260,24 @@ setconfig() {
 
 setdomain() {
   clear
-  echo >&2 "what is your arc subdomain?"
+  echo >&2 "what is your Studio subdomain?"
   echo >&2 "https://<subdomain>.instructuremedia.com"
-  read arcdomain
-  echo "arc_domain=\"$arcdomain\"" >> ~/.inst
+  read studiodomain
+  echo "studio_domain=\"$studiodomain\"" >> ~/.inst
 }
 
 setemail() {
   clear
-  echo >&2 "What is your arc login email address?"
-  read arcemail
-  echo >&2 "arc_email=\"$arcemail\"" >> ~/.inst
+  echo >&2 "What is your Studio login email address?"
+  read studioemail
+  echo >&2 "studio_email=\"$studioemail\"" >> ~/.inst
 }
 
 setpassword() {
   clear
-  echo >&2 "What is your arc login password?"
+  echo >&2 "What is your Studio login password?"
   read arcpassword
-  echo >&2 "arc_password=\"$arcpassword\"" >> ~/.inst
+  echo >&2 "studio_password=\"$studiopassword\"" >> ~/.inst
 }
 
 # OUTPUT FILE ##################################################################
@@ -329,11 +329,11 @@ else
         X)
           sethttp $OPTARG ;;
         d)
-          arc_domain="$OPTARG" ;;
+          studio_domain="$OPTARG" ;;
         e)
-          arc_email="$OPTARG" ;;
+          studio_email="$OPTARG" ;;
         p)
-          arc_password="$OPTARG" ;;
+          studio_password="$OPTARG" ;;
         o)
           setoutput $OPTARG;;
         F)
@@ -366,9 +366,9 @@ fi
 # BUILD COMMAND ################################################################
 # ##############################################################################
 
-if [ -z "$arc_domain" ] && [ -z "$arc_email" ] && [ -z "$arc_password" ]; then
+if [ -z "$studio_domain" ] && [ -z "$studio_email" ] && [ -z "$studio_password" ]; then
   readconfig
-elif [ -z "$arc_domain" ] || [ -z "$arc_email" ] || [ -z "$arc_password" ]; then
+elif [ -z "$studio_domain" ] || [ -z "$studio_email" ] || [ -z "$studio_password" ]; then
   echo >&2 "\`-d\`, \`-e\`, and \`-p\` are required when not using a config file"
   usage
   exit 2
@@ -386,7 +386,7 @@ userid=""
 token=""
 curlopts="--tlsv1.2 --retry 2 --retry-connrefused -s -S -g"
 
-session=$(curl $curlopts -H "Content-Type: application/json" --data '{"email":"'$arc_email'","password":"'$arc_password'"}' -X POST "https://$arc_domain.instructuremedia.com/api/auth/session")
+session=$(curl $curlopts -H "Content-Type: application/json" --data '{"email":"'$studio_email'","password":"'$studio_password'"}' -X POST "https://$studio_domain.instructuremedia.com/api/auth/session")
 if [ $? -gt 0 ]; then
   echo >&2 "Unable to generate a session.  Please ensure that your credentials are accurate."
   exit 2
@@ -405,7 +405,7 @@ fi
 # BUILD COMMAND ################################################################
 # ##############################################################################
 
-command="curl $curlopts -H 'Authorization: Bearer user_id=\"$userid\", token=\"$token\"' -X $httpmethod \"https://$arc_domain.instructuremedia.com/api/$path\" $formopts $outputrenderer $outputpath"
+command="curl $curlopts -H 'Authorization: Bearer user_id=\"$userid\", token=\"$token\"' -X $httpmethod \"https://$studio_domain.instructuremedia.com/api/$path\" $formopts $outputrenderer $outputpath"
 if [ "$sample" = true ]; then
   echo "$command"
 else
