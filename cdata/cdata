@@ -72,6 +72,8 @@ install() {
     command -v ${dep[3]} > /dev/null 2>&1 && npm install -g "${dep[1]}" || manualinstall ${dep[@]} ""
   elif [ ${dep[3]} = "pip" ]; then
     command -v ${dep[3]} > /dev/null 2>&1 && pip2 install "${dep[1]}" || manualinstall ${dep[@]} ""
+  elif [ ${dep[3]} = "brew" ]; then
+    command -v ${dep[3]} > /dev/null 2>&1 && brew install "${dep[1]}" || manualinstall ${dep[@]} ""
   else
     manualinstall ${dep[@]} ""
   fi
@@ -92,6 +94,8 @@ manualinstall() {
       echo >&2 "\`npm install -g ${dep[1]}\` failed"
     elif [ ${dep[3]} = "pip" ]; then
       echo >&2 "\`pip2 install ${dep[1]}\` failed"
+    elif [ ${dep[3]} = "brew" ]; then
+      echo >&2 "\`brew install ${dep[1]}\` failed"
     else
       echo >&2 "\`curl\` is a system package"
     fi
@@ -100,6 +104,8 @@ manualinstall() {
     echo >&2 "Try using \`npm install -g ${dep[1]}\` to manually install"
   elif [ ${dep[3]} = "pip" ]; then
     echo >&2 "Try using \`pip2 install ${dep[1]}\` to manually install"
+  elif [ ${dep[3]} = "brew" ]; then
+    echo >&2 "Try using \`brew install ${dep[1]}\` to manually install"
   else
     echo >&2 "${dep[1]} must be installed using a system package manager"
   fi
@@ -149,7 +155,7 @@ usage() {
 
 version() {
   logo
-  echo >&2 "  canvas-data-cli version 0.3.2"
+  echo >&2 "  canvas-data-cli version 0.4.2"
   exit
 }
 
@@ -167,9 +173,10 @@ license() {
 # multi-dimensional array when passed as a parameter
 json=("" "json" "json" "npm")
 pygments=("" "pygments" "pygmentize" "pip")
+jq=("" "jq" "jq" "brew")
 shellgetopts=("" "getopts" "getopts" "system")
 curl=("" "curl" "curl" "system")
-dependencies=(JSON=${json[@]} PYGMENTS=${pygments[@]} SHELLGETOPTS=${shellgetopts[@]} CURL=${curl[@]})
+dependencies=(JSON=${json[@]} PYGMENTS=${pygments[@]} JQ=${jq[@]} SHELLGETOPTS=${shellgetopts[@]} CURL=${curl[@]})
 for dep in "${dependencies[@]}"
   do dependency ${dep[@]}
 done
@@ -406,7 +413,6 @@ elif [ -z "$data_key" ] || [ -z "$data_secret" ]; then
 fi
 
 if [ "$download" = true ] && [ -n "$outputpath" ]; then
-  echo "warning: Downloading dumps is still in development."
   outputrenderer=""
 elif [ "$download" = true ] && [ -z "$outputpath" ]; then
   echo >&2 "Both \`-d\` and \`-o\` are requied when downloading dumps"
@@ -436,16 +442,11 @@ if [ "$sample" = true ]; then
   echo "$command"
 elif [ "$download" = true ]; then
   dumps=$(eval curl $curlopts \"https://portal.inshosteddata.com$prefix$path$params\")
-  # declare -A tables
-  # Python JSON to array values
-  # for table in ${!tables[@]}; do
-  #  t=$(echo $table | python -c "import sys, json; print json.load(sys.stdin)['table']")
-    u=$(echo $dumps | python -c "import sys, json; print json.load(sys.stdin)['history'][0]['files'][0]['url']")
-    f=$(echo $dumps | python -c "import sys, json; print json.load(sys.stdin)['history'][0]['files'][0]['filename']")
-    #id=$(echo $dumps | python -c "import sys, json; print json.load(sys.stdin)['history'][0]['sequence']")
-    # TODO: sub params for $curlopts
-    $(eval curl --tlsv1.2 --retry 2 --retry-connrefused -s -S -g \"$u\" $outputpath$f)
-  #done
+  for row in $(echo "${dumps}" | jq -rc '.artifactsByTable[].files[0]'); do
+    u=$(echo ${row} | jq -r '.url')
+    f=$(echo ${row} | jq -r '.filename')
+    $(eval curl $curlopts \"$u\" $outputpath$f)
+  done
 else
   eval $command
 fi
