@@ -39,7 +39,7 @@ METHOD
       setoutput will automatically generate safe filenames based on API methods and an epoch timestamp then output them as JSON when a directory is passed. Example:
 
       insthelp setoutput false ~/Desktop/ "path/to/resource"
-      ~/Desktop/1562961260_path_to_resource.json
+      ~/Desktop/path_to_resource_1562961260.json
 
       However, a full filename can be passed and it will be respected. Additionally, it is not required to pass the API method in this case. Example:
 
