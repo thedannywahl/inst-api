@@ -19,310 +19,40 @@
 
 # HELPER FUNCTIONS #############################################################
 # ##############################################################################
-
-logo() {
-  echo '
-           CCCCCCCCCCCC
-      C     CCCCCCCCCC     C
-     CCC     CCCCCCCC     CCC
-    CCCCC       CC       CCCCC
-   CCCCCC                CCCCCC
-                CC
-C         CC          CC         C
-CCC                            CCC
-CCCC                          CCCC
-CCCCC   C                C   CCCCC
-CCCCC   C                C   CCCCC
-CCCC                          CCCC
-CCC                            CCC
-C         CC          CC         C
-                CC
-   CCCCCC                CCCCCC
-    CCCCC       CC       CCCCC
-     CCC     CCCCCCCC     CCC
-      C     CCCCCCCCCC     C
-           CCCCCCCCCCCC
-  '
-}
-
-dependency() {
-  declare -a dep=("$@")
-  command -v ${dep[2]} > /dev/null 2>&1 || prompt ${dep[@]}
-}
-
-prompt() {
-  declare -a dep=("$@")
-  clear
-  echo >&2 "canvas-data-cli requires ${dep[1]} (${dep[3]}) but it's not installed"
-  echo >&2 "would you like to install it now?"
-  select yn in "Yes" "No"; do
-    case $yn in
-      Yes ) install ${dep[@]}; dependency ${dep[@]}; break;;
-      No ) manualinstall ${dep[@]}; exit;;
-    esac
-  done
-}
-
-install() {
-  declare -a dep=("$@")
-  clear
-  echo >&2 "canvas-data-cli will attempt to install ${dep[1]} (${dep[3]})"
-  hr
-  if [ ${dep[3]} = "npm" ]; then
-    command -v ${dep[3]} > /dev/null 2>&1 && npm install -g "${dep[1]}" || manualinstall ${dep[@]} ""
-  elif [ ${dep[3]} = "pip" ]; then
-    command -v ${dep[3]} > /dev/null 2>&1 && pip2 install "${dep[1]}" || manualinstall ${dep[@]} ""
-  elif [ ${dep[3]} = "brew" ]; then
-    command -v ${dep[3]} > /dev/null 2>&1 && brew install "${dep[1]}" || manualinstall ${dep[@]} ""
-  else
-    manualinstall ${dep[@]} ""
-  fi
-  local status=$(echo $?)
-  if [ "$status" -gt 0 ]; then
-    manualinstall ${dep[@]} $status
-  fi
-  hr
-  echo >&2 "${dep[1]} (${dep[3]}) successfully installed"
-}
-
-manualinstall() {
-  declare -a dep=("$@")
-  if [ ${#dep[@]} -gt 4 ]; then
-    hr
-    echo "canvas-data-cli was unable to install ${dep[1]} (${dep[3]})"
-    if [ ${dep[3]} = "npm" ]; then
-      echo >&2 "\`npm install -g ${dep[1]}\` failed"
-    elif [ ${dep[3]} = "pip" ]; then
-      echo >&2 "\`pip2 install ${dep[1]}\` failed"
-    elif [ ${dep[3]} = "brew" ]; then
-      echo >&2 "\`brew install ${dep[1]}\` failed"
-    else
-      echo >&2 "\`curl\` is a system package"
-    fi
-  fi
-  if [ ${dep[3]} = "npm" ]; then
-    echo >&2 "Try using \`npm install -g ${dep[1]}\` to manually install"
-  elif [ ${dep[3]} = "pip" ]; then
-    echo >&2 "Try using \`pip2 install ${dep[1]}\` to manually install"
-  elif [ ${dep[3]} = "brew" ]; then
-    echo >&2 "Try using \`brew install ${dep[1]}\` to manually install"
-  else
-    echo >&2 "${dep[1]} must be installed using a system package manager"
-  fi
-  exit 127
-}
-
-hr() {
-  local start=$'\e(0' end=$'\e(B' line='qqqqqqqqqqqqqqqq'
-  local cols=${COLUMNS:-$(tput cols)}
-  while ((${#line} < cols)); do line+="$line"; done
-  echo >&2 ""
-  printf '%s%s%s\n' "$start" "${line:0:cols}" "$end"
-  echo >&2 ""
-}
-
-outputrenderer="| json | pygmentize -l json"
-setrenderer() {
-  local renderer="$1"
-  case $renderer in
-    "plain")
-      outputrenderer="" ;;
-    "color")
-      outputrenderer="| json | pygmentize -l json" ;;
-    *)
-      echo >&2 "invalid argument \`$renderer\` for \`-r\`" && usage && exit 2 ;;
-  esac
-}
-
-curlopts="--tlsv1.2 --retry 2 --retry-connrefused -s -S -g"
-
-# HELP STUFF ###################################################################
-# ##############################################################################
-
-help() {
-  usage
-  exit;
-}
-
-verbosehelp() {
-  curl $curlopts -X GET "https://raw.githubusercontent.com/thedannywahl/inst-api/master/cdata/README" | less
-  exit;
-}
-
-usage() {
-  echo -e 2>&1 "Usage: cdata [options] method\r\nHelp: cdata -h"
-}
-
-version() {
-  logo
-  echo >&2 "  canvas-data-cli version 0.4.2"
-  exit
-}
-
-license() {
-  curl $curlopts -X GET "https://www.apache.org/licenses/LICENSE-2.0.txt" | less
-  exit
-}
-
-# HANDLE DEPENDENCIES ##########################################################
-# Requires: jsontool (npm), pygmentize (pip), curl, and getopts                #
-# ##############################################################################
-
-# null | name | executable | repository
-# `null` is a hacky shift to avoid string manipulation of
-# multi-dimensional array when passed as a parameter
-json=("" "json" "json" "npm")
-pygments=("" "pygments" "pygmentize" "pip")
-jq=("" "jq" "jq" "brew")
-shellgetopts=("" "getopts" "getopts" "system")
-curl=("" "curl" "curl" "system")
-dependencies=(JSON=${json[@]} PYGMENTS=${pygments[@]} JQ=${jq[@]} SHELLGETOPTS=${shellgetopts[@]} CURL=${curl[@]})
-for dep in "${dependencies[@]}"
-  do dependency ${dep[@]}
-done
+cmd=${0##*/}
+curlopts=$(insthelp curlopts)
+ver="1.0.0"
+outputrenderer=$(insthelp setrenderer)
+$(insthelp checkdeps) > /dev/null 2>&1
 
 # PREF FILE ####################################################################
 # ##############################################################################
-
-canvas_domain=""
-canvas_token=""
-data_key=""
-data_secret=""
-readconfig() {
-  if [ -f ~/.inst ]; then
-    . ~/.inst
-    if [ -z $data_key ]; then
-      echo >&2 "unable to read key from config file \`~/.inst\`"
-      echo >&2 "It must be manually added or repaired.  Format:"
-      echo >&2 "data_key=\"<key>\""
-      exit 2
-    fi
-    if [ -z $data_secret ]; then
-      echo >&2 "unable to read secret from config file \`~/.inst\`"
-      echo >&2 "It must be manually added or repaired.  Format:"
-      echo >&2 "data_secret=\"<secret>\""
-      exit 2;
-    fi
-  else
-    clear
-    echo >&2 "config file \`~/.inst\` not found"
-    echo >&2 "would you like to create it now?"
-    select yn in "Yes" "No"; do
-      case $yn in
-        Yes )
-          setconfig; break ;;
-        No )
-          clear
-          echo >&2 "canvas-data-cli requires a config file or use \`-k\` and \`-m\`"
-          usage; exit 2 ;;
-      esac
-    done
+if [ -f ~/.inst ]; then
+  . ~/.inst
+  if [ -z $data_key ] || [ -z $data_secret ]; then
+   $(insthelp setconfig $cmd)
+   exit
   fi
-}
-
-setconfig() {
-  clear
-  echo -e "DO NOT create a config file on a shared system"
-  echo >&2 "other system users will be able to authenticate using your"
-  echo >&2 "saved credentials.  Instead use the \`-k\` and \`-m\` options"
-  echo >&2 "Do you wish to proceed?"
-  select ok in "Okay" "Cancel"; do
-    case $ok in
-      Okay)
-        touch ~/.inst
-        if [ $? = 0 ]; then
-          setkey
-          setsecret
-          readconfig
-        else
-          clear
-          echo >&2 "unable to create config file \`~/.inst\`"
-          echo >&2 "please ensure that you have appropriate permissions"
-          exit 2
-        fi; break;;
-      Cancel)
-        clear
-        echo >&2 "Enter your command again using the \`-k\` and \`-m\` options"
-        usage;
-        exit 0;;
-    esac
-  done
-  clear
-}
-
-setkey() {
-  clear
-  echo >&2 "What is your Canvas Data key?"
-  read cdatakey
-  echo "data_key=\"$cdatakey\"" >> ~/.inst
-}
-
-setsecret() {
-  clear
-  echo >&2 "please input your Canvas Data Secret"
-  read cdatasecret
-  echo >&2 "data_secret=\"$cdatasecret\"" >> ~/.inst
-}
-
-# OUTPUT FILE ##################################################################
-# ##############################################################################
-
-outputpath=""
-outputfile=""
-setoutput() {
-  if [ "$download" = true ]; then
-    if [ ! -d ]; then
-      clear
-      echo >&2 "output directory does not exist."
-      exit 1
-    fi
-    outputpath="> $1"
-  else
-    if [[ -d $1 ]]; then
-      fn=$(date +%s)
-      outputfile="${1}${fn}.json"
-    fi
-    if [ -z "$outputfile" ]; then
-      outputfile=$1
-    fi
-    if [ -f $outputfile ]; then
-      clear
-      echo "\`$outputfile\` exists, overwrite it?"
-      select ow in "Yes" "No"; do
-        case $ow in
-          Yes )
-            outputpath="> $outputfile"; break ;;
-          No )
-            echo >&2 "will not overwrite file."
-            exit 1
-        esac
-      done
-    else
-      outputpath="> $outputfile"
-    fi
-  fi
-}
+else
+ $(insthelp setconfig $cmd)
+ exit
+fi
 
 # QUERY PARAMS #################################################################
 # ##############################################################################
 
 params=""
-query="?"
-setquery() {
-  if [[ $params == *"?"* ]]; then
-    query="&"
-  fi
-}
+query=$(insthelp setquery)
 
 after=""
 setafter() {
-  setquery
+  query=$(insthelp setquery $params)
   params="${params}${query}after=$1"
 }
 
 limit=""
 setlimit() {
-  setquery
+  query=$(insthelp setquery $params)
   params="${params}${query}limit=$1"
 }
 
@@ -330,7 +60,7 @@ setlimit() {
 # ##############################################################################
 getsignature() {
   method="GET"
-  host="portal.inshosteddata.com"
+  host="api.inshosteddata.com"
   contenttype="application/json"
   contentMD5=""
   hp=$params
@@ -346,22 +76,28 @@ getsignature() {
 # ##############################################################################
 
 if [ $# -eq 0 ] && [ ! -f ~/.inst ]; then
-  readconfig
-  help
+  $(insthelp readconfig $cmd)
+  $(insthelp help $cmd)
+  exit 2
 elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
-  help
+  $(insthelp help $cmd)
+  exit 2
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
     while getopts ":hlvcdsq:a:r:k:m:o:" opt; do
       case $opt in
         h)
-          verbosehelp ;;
+          $(insthelp verbosehelp $cmd)
+          exit ;;
         l)
-          license ;;
+          $(insthelp license)
+          exit ;;
         v)
-          version ;;
+          $(insthelp version $cmd $ver)
+          exit ;;
         c)
-          setconfig ;;
+          $(insthelp setconfig $cmd)
+          exit ;;
         d)
           download=true ;;
         s)
@@ -371,17 +107,22 @@ else
         a)
           setafter $OPTARG ;;
         r)
-          setrenderer $OPTARG ;;
+          outputrenderer=$(insthelp setrenderer $OPTARG) ;;
         k)
           data_key="$OPTARG" ;;
         m)
           data_secret="$OPTARG" ;;
         o)
-          setoutput $OPTARG;;
+          outputpath=$(insthelp setoutput $download $OPTARG)
+          if [ "$outputpath" = "ERR" ]; then exit 1; fi;;
         \?)
-          echo >&2 "invalid option: \`-$OPTARG\`" && usage && exit 2 ;;
+          printf >&2 "Invalid option: \`-$OPTARG\`\r\n"
+          $(insthelp help $cmd)
+          exit 2 ;;
         :)
-          echo >&2 "missing argument for \`-$OPTARG\`" && usage && exit 2 ;;
+          printf >&2 "Missing argument for \`-$OPTARG\`\r\n"
+          $(insthelp help $cmd)
+          exit 2 ;;
       esac
     done
     shift $((OPTIND-1))
@@ -390,8 +131,8 @@ else
       shift
       break
     else
-      echo "No API method provided!"
-      usage
+      printf >&2 "No API method provided\r\n"
+      $(insthelp help $cmd)
       exit 2
     fi
   done
@@ -405,18 +146,18 @@ fi
 # ##############################################################################
 
 if [ -z "$data_key" ] && [ -z "$data_secret" ]; then
-  readconfig
+  $(insthelp readconfig $cmd)
 elif [ -z "$data_key" ] || [ -z "$data_secret" ]; then
-  echo >&2 "Both \`-k\` and \`-m\` are requied when not using a config file"
-  usage
+  printf >&2 "Both \`-k\` and \`-m\` are requied when not using a config file\r\n"
+  $(insthelp help $cmd)
   exit 2
 fi
 
 if [ "$download" = true ] && [ -n "$outputpath" ]; then
   outputrenderer=""
 elif [ "$download" = true ] && [ -z "$outputpath" ]; then
-  echo >&2 "Both \`-d\` and \`-o\` are requied when downloading dumps"
-  usage
+  printf >&2 "Both \`-d\` and \`-o\` are requied when downloading dumps\r\n"
+  $(insthelp help $cmd)
   exit 2
 fi
 
@@ -437,15 +178,23 @@ else
   after=""
 fi
 
-command="curl $curlopts \"https://portal.inshosteddata.com$prefix$path$params\" $outputrenderer $outputpath"
+command="curl $curlopts \"https://api.inshosteddata.com$prefix$path$params\" $outputrenderer $outputpath"
 if [ "$sample" = true ]; then
-  echo "$command"
+  printf >&2 "$command\r\n"
 elif [ "$download" = true ]; then
-  dumps=$(eval curl $curlopts \"https://portal.inshosteddata.com$prefix$path$params\")
+  dumps=$(eval curl $curlopts \"https://api.inshosteddata.com$prefix$path$params\")
+  fpath=${outputpath:2}
+  printf >&2 "Saving files to $fpath:\r\n"
   for row in $(echo "${dumps}" | jq -rc '.artifactsByTable[].files[0]'); do
     u=$(echo ${row} | jq -r '.url')
     f=$(echo ${row} | jq -r '.filename')
+    printf >&2 "  ==> $f "
     $(eval curl $curlopts \"$u\" $outputpath$f)
+    if [ -f "$fpath$f" ]; then
+      printf $(tput setaf 2)'\xe2\x9c\x94\r\n'$(tput sgr0)
+    else
+      printf $(tput setaf 1)'\xE2\x9c\x98\r\n'$(tput sgr0)
+    fi
   done
 else
   eval $command
