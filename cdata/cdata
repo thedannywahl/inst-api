@@ -20,10 +20,11 @@
 # HELPER FUNCTIONS #############################################################
 # ##############################################################################
 cmd=${0##*/}
-curlopts=$(insthelp curlopts)
 ver="1.0.0"
-outputrenderer=$(insthelp setrenderer)
 $(insthelp checkdeps) > /dev/null 2>&1
+curlopts=$(insthelp curlopts)
+outputrenderer=$(insthelp setrenderer)
+download=false
 
 # PREF FILE ####################################################################
 # ##############################################################################
@@ -113,8 +114,8 @@ else
         m)
           data_secret="$OPTARG" ;;
         o)
-          outputpath=$(insthelp setoutput $download $OPTARG)
-          if [ "$outputpath" = "ERR" ]; then exit 1; fi;;
+          outputpath=$(insthelp setoutput $download $OPTARG ${BASH_ARGV[0]})
+          if [ "$outputpath" = "ERR" ]; then exit 1; fi ;;
         \?)
           printf >&2 "Invalid option: \`-$OPTARG\`\r\n"
           $(insthelp help $cmd)
