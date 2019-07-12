@@ -18,7 +18,6 @@
 
 # HELPER FUNCTIONS #############################################################
 # ##############################################################################
-
 ver="1.0.0"
 
 hr() {
@@ -29,7 +28,6 @@ hr() {
   printf '%s%s%s\r\n' "$start" "${line:0:cols}" "$end" >&2
   printf >&2 ""
 }
-
 
 setrenderer() {
   local renderer="$1"
@@ -154,6 +152,26 @@ logo() {
 
     ${NORMAL}" ;;
   esac
+}
+
+sethttp() {
+  local http="$1"
+  local default="GET"
+  case $http in
+    get|GET|"")
+      httpmethod="GET" ;;
+    post|POST)
+      httpmethod="POST" ;;
+    put|PUT)
+      httpmethod="PUT" ;;
+    delete|DELETE)
+      httpmethod="DELETE" ;;
+    *)
+      printf >&2 "invalid argument \`$http\` for \`-X\`,"
+      printf >&2 " using default method \`$default\`.\r\n"
+      httpmethod="$default" ;;
+    esac
+    echo "$httpmethod"
 }
 
 # PREF FILE ####################################################################
@@ -537,7 +555,9 @@ case $fnc in
   setoutput)
     setoutput $2 $3 $4 ;;
   setquery)
-    setquery $2 ;; #
+    setquery $2 ;;
+  sethttp)
+    sethttp $2 ;;
   "")
     metahelp ${0##*/} $ver;;
 esac
