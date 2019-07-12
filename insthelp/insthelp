@@ -1,0 +1,543 @@
+#!/bin/bash
+
+# LICENSE ######################################################################
+# ##############################################################################
+# Copyright 2017 Danny Wahl (danny@instructure.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# HELPER FUNCTIONS #############################################################
+# ##############################################################################
+
+ver="1.0.0"
+
+hr() {
+  local start=$'\e(0' end=$'\e(B' line='qqqqqqqqqqqqqqqq'
+  local cols=${COLUMNS:-$(tput cols)}
+  while ((${#line} < cols)); do line+="$line"; done
+  printf >&2 ""
+  printf '%s%s%s\r\n' "$start" "${line:0:cols}" "$end" >&2
+  printf >&2 ""
+}
+
+
+setrenderer() {
+  local renderer="$1"
+  local default="| jq ."
+  case $renderer in
+    plain|p)
+      echo "" ;;
+
+    color|c)
+      echo "$default" ;;
+    "")
+      echo "$default" ;;
+    *)
+      printf >&2 "Warning: invalid argument \`$renderer\` for \`-r\`, "
+      printf >&2 "using default renderer \`$default\`.\r\n"
+      echo "$default"
+      ;;
+  esac
+  exit
+}
+
+curlopts="--retry 2 --retry-connrefused -s -S -g"
+curlopts() {
+  tls=$(openssl ciphers -v | sed -ne '/TLSv1/p')
+  if [[ $tls == *"TLSv1.3"* ]]; then
+    curlopts="$curlopts --tlsv1.3"
+  else
+    curlopts="$curlopts --tlsv1.2"
+  fi
+}
+curlopts
+
+logo() {
+  local cmd=$1
+  RED=$(tput setaf 1)
+  YELLOW=$(tput setaf 3)
+  LIME_YELLOW=$(tput setaf 190)
+  GREEN=$(tput setaf 2)
+  BLUE=$(tput setaf 4)
+  CYAN=$(tput setaf 6)
+  NORMAL=$(tput sgr0)
+  case $cmd in
+    canvas|catalog|cdata|commons)
+      printf >&2 ${RED}'
+             CCCCCCCCCCCC
+        C     CCCCCCCCCC     C
+       CCC     CCCCCCCC     CCC
+      CCCCC       CC       CCCCC
+     CCCCCC                CCCCCC
+                  CC
+  C         CC          CC         C
+  CCC                            CCC
+  CCCC                          CCCC
+  CCCCC   C                C   CCCCC
+  CCCCC   C                C   CCCCC
+  CCCC                          CCCC
+  CCC                            CCC
+  C         CC          CC         C
+                  CC
+     CCCCCC                CCCCCC
+      CCCCC       CC       CCCCC
+       CCC     CCCCCCCC     CCC
+        C     CCCCCCCCCC     C
+             CCCCCCCCCCCC
+
+    '${NORMAL} ;;
+    bridge)
+      printf >&2 ${BLUE}'
+      BBBBBBBBBBBBBBBBBBBBBBBBBB
+      BBBBBBBBBBBBBBBBBBBBBBB BB
+      BBBBBBBBBBBBBBBBBBBBBB  BB
+      BBBBBBBBBBBBBBBBBBBBB   BB
+      BBBBBBBBBBBBBBBBBBBB    BB
+      BBBBBBBBBBBBBBBBB B     BB
+      BBBBBBBBBBBBBBBB  B     BB
+      BBBBBBBBBBBBBB    B     BB
+      BBBBBBBBBB  B     B     BB
+      BB    B     B     B     BB
+      BBBBBBBBBBBBBBBBBBBBBBBBBB
+
+    '${NORMAL} ;;
+    studio)
+    printf >&2 ${GREEN}'
+  SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+  S                              S
+  S              S               S
+  S              SSS             S
+  S              S               S
+  S                              S
+  SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+  S                              S
+  SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+       S     S        S     S
+  SSS  S     S        S     S  SSS
+  SSSSSS     S        S     SSSSSS
+  SSS        S        S        SSS
+           SSSSS    SSSSS
+           SSSSS    SSSSS
+           SSSSS    SSSSS
+
+    '${NORMAL} ;;
+    insthelp)
+      printf >&2 "
+                   ${YELLOW}I
+                IIIIIII
+            ${LIME_YELLOW}I${YELLOW}IIIIIIIIIIIII${RED}I
+        ${LIME_YELLOW}IIIIIIII${YELLOW}IIIIIII${RED}IIIIIII
+     ${LIME_YELLOW}IIIIIIIIIIIIII${YELLOW}I${RED}IIIIIIIIIIIIII
+        ${LIME_YELLOW}IIIIIIII       ${RED}IIIIIII
+            ${LIME_YELLOW}I             ${RED}I
+
+
+                   ${BLUE}I
+                IIIIIII
+            IIIIIIIIIIIIIII
+        IIIIIIIIIIIIIIIIIIIIII
+     IIIIIIIIIIIIIIIIIIIIIIIIIIIII
+        IIIIIIIIIIIIIIIIIIIIII
+            IIIIIIIIIIIIIII
+                IIIIIII
+                   I
+
+    ${NORMAL}" ;;
+  esac
+}
+
+# PREF FILE ####################################################################
+################################################################################
+readconfig() {
+  local cmd=$1
+  local bridgeconfig=("bridge_domain" "bridge_token")
+  local canvasconfig=("canvas_domain" "canvas_token")
+  local catalogconfig=("catalog_domain" "catalog_token")
+  local cdataconfig=("data_key" "data_secret")
+  local commonsconfig=("canvas_domain" "canvas_token")
+  local studioconfig=("studio_domain" "studio_email" "studio_password")
+  local cfg=()
+  case $cmd in
+    bridge)
+      cfg=(${bridgeconfig[@]}) ;;
+    canvas)
+      cfg=(${canvasconfig[@]}) ;;
+    catalog)
+      cfg=(${catalogconfig[@]}) ;;
+    cdata)
+      cfg=(${cdataconfig[@]}) ;;
+    commons)
+      cfg=(${commonsconfig[@]}) ;;
+    studio)
+      cfg=(${studioconfig[@]}) ;;
+  esac
+  if [ -f ~/.inst ]; then
+    . ~/.inst
+    for ((i=0; $i<${#cfg[@]}; i++))
+    do
+      if [ -z ${!cfg[$i]} ]; then
+        printf >&2 "unable to read ${cfg[$i]} from config file \`~/.inst\`\r\n"
+        printf >&2 "It must be manually added or repaired.  Format:\r\n"
+        printf >&2 "${cfg[$i]}=\"<value>\"\r\n"
+        exit 2
+      fi
+    done
+  else
+    clear >&2
+    printf >&2 "config file \`~/.inst\` not found\r\n"
+    printf >&2 "would you like to create it now?\r\n"
+    select yn in "Yes" "No"; do
+      case $yn in
+        Yes )
+          setconfig; break ;;
+        No )
+          clear >&2
+          printf >&2 "$cmd requires a config file or authentication passed as parameters\r\n"
+          usage $cmd; exit 2 ;;
+      esac
+    done
+  fi
+}
+
+setconfig() {
+  local cmd=$1
+  clear >&2
+  printf >&2 "DO NOT create a config file on a shared system\r\n"
+  printf >&2 "other system users will be able to authenticate using your\r\n"
+  printf >&2 "saved credentials.  Instead pass authentication as parameters\r\n"
+  printf >&2 "Do you wish to proceed?\r\n"
+  select ok in "Okay" "Cancel"; do
+    case $ok in
+      Okay)
+        touch ~/.inst
+        if [ $? = 0 ]; then
+          case $cmd in
+            bridge)
+               bridge_setdomain; bridge_settoken;;
+            canvas)
+               canvas_setdomain; canvas_settoken;;
+            catalog)
+               catalog_setdomain; catalog_settoken;;
+            cdata)
+               cdata_setkey; cdata_setsecret;;
+            commons)
+               commons_setdomain; commons_settoken;;
+            studio)
+               studio_setdomain; studio_setemail; studio_setpassword;;
+          esac
+          readconfig
+        else
+          clear >&2
+          printf >&2 "unable to create config file \`~/.inst\`\r\n"
+          printf >&2 "please ensure that you have appropriate permissions\r\n"
+          exit 2
+        fi; break;;
+      Cancel)
+        clear >&2
+        printf >&2 "Enter your command again passing authentication as parameters\r\n"
+        usage $cmd
+        exit 0;;
+    esac
+  done
+  clear >&2
+}
+
+bridge_setdomain() {
+  clear >&2
+  printf >&2 "what is your Bridge subdomain?\r\n"
+  printf >&2 "https://<subdomain>.bridgeapp.com"
+  read bridgedomain
+  echo "bridge_domain=\"$bridgedomain\"" >> ~/.inst
+}
+
+bridge_settoken() {
+  clear >&2
+  echo >&2 "What is your Bridge API token?\r\n"
+  read bridgetoken
+  echo "bridge_token=\"$bridgetoken\"" >> ~/.inst
+}
+
+canvas_setdomain() {
+  clear >&2
+  printf >&2 "What is your Canvas subdomain?\r\n"
+  printf >&2 "https://<subdomain>.instructure.com\r\n"
+  read canvasdomain
+  echo "canvas_domain=\"$canvasdomain\"" >> ~/.inst
+}
+
+canvas_settoken() {
+  clear >&2
+  echo >&2 "What is your Canvas API token?\r\n"
+  read canvastoken
+  echo "canvas_token=\"$canvastoken\"" >> ~/.inst
+}
+
+catalog_setdomain() {
+  clear >&2
+  printf >&2 "What is your Canvas Catalog subdomain?\r\n"
+  echo >&2 "https://<subdomain>.catalog.instructure.com\r\n"
+  read catalogdomain
+  echo "catalog_domain=\"$catalogdomain\"" >> ~/.inst
+}
+
+catalog_settoken() {
+  clear >&2
+  printf >&2 "What is your Canvas API token?\r\n"
+  read catalogtoken
+  echo "catalog_token=\"$catalogtoken\"" >> ~/.inst
+}
+
+cdata_setkey() {
+  clear >&2
+  printf >&2 "What is your Canvas Data key?\r\n"
+  read cdatakey
+  echo "data_key=\"$cdatakey\"" >> ~/.inst
+}
+
+cdata_setsecret() {
+  clear >&2
+  printf >&2 "What is your Canvas Data secret?\r\n"
+  read cdatasecret
+  echo "data_secret=\"$cdatasecret\"" >> ~/.inst
+}
+
+commons_setdomain() {
+  clear >&2
+  printf >&2 "What is your Canvas subdomain?\r\n"
+  printf >&2 "https://<subdomain>.instructure.com\r\n"
+  read canvasdomain
+  echo "canvas_domain=\"$canvasdomain\"" >> ~/.inst
+}
+
+commons_settoken() {
+  clear >&2
+  printf >&2 "What is your Canvas API token?\r\n"
+  read canvastoken
+  echo "canvas_token=\"$canvastoken\"" >> ~/.inst
+}
+
+studio_setdomain() {
+  clear >&2
+  printf >&2 "What is your Studio subdomain?\r\n"
+  printf >&2 "https://<subdomain>.instructuremedia.com\r\n"
+  read studiodomain
+  echo "studio_domain=\"$studiodomain\"" >> ~/.inst
+}
+
+studio_setemail() {
+  clear >&2
+  printf >&2 "What is your Studio login email address?\r\n"
+  read studioemail
+  echo "studio_email=\"$studioemail\"" >> ~/.inst
+}
+
+studio_setpassword() {
+  clear >&2
+  printf >&2 "What is your Studio login password?\r\n"
+  read arcpassword
+  echo "studio_password=\"$studiopassword\"" >> ~/.inst
+}
+
+# HELP STUFF ###################################################################
+# ##############################################################################
+metahelp() {
+  local cmd=$1
+  local ver=$2
+  version $cmd $ver
+}
+
+help() {
+  local cmd=$1
+  usage $cmd
+  exit
+}
+
+verbosehelp() {
+  local cmd=$1
+  curl $curlopts "https://raw.githubusercontent.com/thedannywahl/inst-api/master/$cmd/README" | less >&2
+  exit
+}
+
+usage() {
+  local cmd=$1
+  printf >&2 "Usage: $cmd [options] method\r\r\nHelp:  $cmd -h\r\n"
+
+}
+
+version() {
+  local cmd=$1
+  local ver=$2
+  logo $cmd
+  printf >&2 "      $cmd version $ver\r\n\r\n"
+  exit
+}
+
+license() {
+  curl $curlopts "https://www.apache.org/licenses/LICENSE-2.0.txt" | less >&2
+  exit
+}
+
+# DEPENDENCIES #################################################################
+# Requires: jq, curl, sed, and getopts                                         #
+# ##############################################################################
+dependency() {
+  declare -a dep=("$@")
+  command -v ${dep[2]} > /dev/null 2>&1 || prompt ${dep[@]}
+}
+
+prompt() {
+  declare -a dep=("$@")
+  clear >&2
+  printf >&2 "inst-api requires ${dep[1]} (${dep[3]}) but it's not installed"
+  printf >&2 "would you like to install it now?"
+  select yn in "Yes" "No"; do
+    case $yn in
+      Yes ) install ${dep[@]}; dependency ${dep[@]}; break;;
+      No ) manualinstall ${dep[@]}; exit;;
+    esac
+  done
+}
+
+install() {
+  declare -a dep=("$@")
+  clear >&2
+  printf >&2 "inst-api will attempt to install ${dep[1]} (${dep[3]})"
+  hr
+  if [ ${dep[3]} = "brew" ]; then
+    command -v ${dep[3]} > /dev/null 2>&1 && brew install "${dep[1]}" >&2 || manualinstall ${dep[@]} ""
+  else
+    manualinstall ${dep[@]} ""
+  fi
+  local status=$(printf $?)
+  if [ "$status" -gt 0 ]; then
+    manualinstall ${dep[@]} $status
+  fi
+  hr
+  printf >&2 "${dep[1]} (${dep[3]}) successfully installed"
+  clear >&2
+}
+
+manualinstall() {
+  declare -a dep=("$@")
+  if [ ${#dep[@]} -gt 4 ]; then
+    hr
+    printf "inst-api was unable to install ${dep[1]} (${dep[3]})"
+    if [ ${dep[3]} = "brew" ]; then
+      printf >&2 "\`${dep[3]} install ${dep[1]}\` failed"
+    else
+      printf >&2 "\`${dep[1]}\` is a system package"
+    fi
+  fi
+  if [ ${dep[3]} = "brew" ]; then
+    printf >&2 "Try using \`${dep[3]} install ${dep[1]}\` to manually install"
+  else
+    printf >&2 "${dep[1]} must be installed using a system package manager"
+  fi
+  exit 127
+}
+
+checkdeps() {
+  jq=("" "jq" "jq" "brew")
+  shellgetopts=("" "getopts" "getopts" "system")
+  curl=("" "curl" "curl" "system")
+  sed=("" "sed" "sed" "systtem")
+  dependencies=(JQ=${jq[@]} SHELLGETOPTS=${shellgetopts[@]} CURL=${curl[@]} SED=${sed[@]})
+  for dep in "${dependencies[@]}"
+    do dependency ${dep[@]}
+  done
+}
+
+# OUTPUT FILE ##################################################################
+# ##############################################################################
+setoutput() {
+  local download=$1
+  local file=$2
+  local call=$3
+  local err="ERR"
+  if [ "$download" = true ]; then
+    if [ ! -d "$file" ]; then
+      printf >&2 "Output directory does not exist.\r\n"
+      echo "$err"
+      exit 1
+    fi
+    outputpath="> $file"
+    echo "$outputpath"
+  else
+    if [ -d "$file" ]; then
+      d=$(date +%s)
+      fn=$(echo ${call//\//_})
+      outputfile="${file}${fn}_${d}.json"
+    fi
+    if [ -z "$outputfile" ]; then
+      outputfile=$file
+    fi
+    if [ -f $outputfile ]; then
+      clear
+      printf >&2 "\`$outputfile\` exists, overwrite it?\r\n"
+      select ow in "Yes" "No"; do
+        case $ow in
+          Yes )
+            outputpath="> $outputfile"; echo "$outputpath"; break ;;
+          No )
+            printf >&2 "will not overwrite file.\r\n"
+            echo "$err"
+            exit 1
+        esac
+      done
+    else
+      outputpath="> $outputfile"
+      echo "$outputpath"
+    fi
+  fi
+}
+
+# QUERY PARAMS #################################################################
+# ##############################################################################
+setquery() {
+  local params=$1
+  query="?"
+  if [[ $params == *"?"* ]]; then
+    query="&"
+  fi
+  echo "$query"
+}
+
+# PARSE COMMAND ################################################################
+# ##############################################################################
+fnc=$1
+case $fnc in
+  help)
+    help $2 ;;
+  verbosehelp)
+    verbosehelp $2 ;;
+  version)
+    version $2 $3 ;;
+  license)
+    license ;;
+  checkdeps)
+    checkdeps ;;
+  curlopts)
+    echo "$curlopts" ;;
+  readconfig)
+    readconfig $2 ;;
+  setconfig)
+    setconfig $2 ;;
+  setrenderer)
+    setrenderer $2 ;;
+  setoutput)
+    setoutput $2 $3 $4 ;;
+  setquery)
+    setquery $2 ;; #
+  "")
+    metahelp ${0##*/} $ver;;
+esac

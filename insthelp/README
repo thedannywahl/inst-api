@@ -1,0 +1,97 @@
+NAME
+    insthelp - https://instructure.com
+
+SYNOPSIS
+    insthelp method [options]
+
+DESCRIPTION
+    insthelp is a collection of helper functions for the inst-api suite. insthelp does not directly do anything itself and is only useful when called from a source command.  However, all methods can be called directly and will print their output to the console.
+
+METHOD
+    The method is the name of the function to be executed by insthelp.
+
+    NULL
+      if no method is passed to insthelp basic version information is printed to the console.
+
+    checkdeps
+      checkdeps verifies that all the system dependencies for inst-API are installed on the system.  checkdeps can attempt to install some dependencies.
+
+    curlopts
+      curlopts will determine the highest supported version of TLS on the client, and will return option flags to be used by the curl command.
+
+    help <command>
+      help prints basic usage info to the console for the source command.
+
+    license
+      license prints the inst-api license to the console.
+
+    readconfig <command>
+      readconfig sources and returns the configuration details from the configuration file (~/.inst) for the source command.
+
+    setconfig <command>
+      setconfig saves configuration details for the source command to the configuration file (~/.inst).
+
+    setoutput <download> <file> [call]
+      setoutput builds an output file path and name for the return of the source command and returns it.
+
+      the download parameter is a boolean flag.
+
+      setoutput will automatically generate safe filenames based on API methods and an epoch timestamp then output them as JSON when a directory is passed. Example:
+
+      insthelp setoutput false ~/Desktop/ "path/to/resource"
+      ~/Desktop/1562961260_path_to_resource.json
+
+      However, a full filename can be passed and it will be respected. Additionally, it is not required to pass the API method in this case. Example:
+
+      insthelp setoutput false ~Desktop/important.txt
+      ~/Desktop/important.txt
+
+      setoutput will not attempt to create directories.  It will prompt a user asking to overwrite an existing file.
+
+    setquery [params]
+
+      setquery parses URL parameters and returns either a '?' or an '&' to the source command.
+
+    setrenderer [renderer]
+      setrenderer takes a renderer input from the source command and returns the renderer to be used by the console.
+
+    verbosehelp <command>
+      verbosehelp prints the full help documentation for the source command to the console.
+
+    version <command> <version>
+      version prints the version number and a sweet ASCII logo of the source command to the console.
+
+EXAMPLES
+    Display the license file
+        insthelp license
+
+    Display the version of the canvas source command
+        insthelp version canvas 1.0.0
+
+    Get the query parameter from within a source command
+        query=$(insthelp setquery $params)
+
+    Display the verbose help for the source command bridge
+        insthelp verbosehelp bridge
+
+FILES
+    ~/.inst
+        Config file.  Used to store and read authentication information for source commands.
+
+EXIT CODES
+    1   Unable to overwrite specified output file
+        (or user canceled overwrite)
+
+    2   Invalid option or missing argument
+
+    127 Missing dependency
+
+        Unspecified exit codes, or an exit code of 0 represent
+        a successful command.
+
+WWW
+    https://www.instructure.com
+        Instructure home page.
+
+    https://github.com/thedannywahl/inst-api
+        Software repository for canvas-data-cli.
