@@ -5,34 +5,24 @@ SYNOPSIS
     cdata [options] method
 
 DESCRIPTION
-    canvas-data-cli is a secure curl wrapper designed to simplify interacting
-    with the canvas data JSON/REST API.
+    canvas-data-cli is a secure curl wrapper designed to simplify interacting with the canvas data JSON/REST API.
 
-    canvas-data-cli automatically authenticates users based on credentials stored
-    in the config file or on values passed at runtime.
+    canvas-data-cli automatically authenticates users based on credentials stored in the config file or on values passed at runtime.
 
 OPTIONS
-    Options start with a single dash and many options require
-    a value after them.
+    Options start with a single dash and many options require a value after them.
 
-    All of the options are optional, however, some require
-    that other options be set as well for example
-    -d <domain> also requires -t <token> and vice versa.
+    All of the options are optional, however, some require that other options be set as well for example -d <domain> also requires -t <token> and vice versa.
 
     All options must be included before the API method.
 
     -a
-        This option retrieves dumps only after the specified
-        sequence number.
+        This option retrieves dumps only after the specified sequence number.
 
     -c
-        This option runs the canvas data configuration and stores the
-        key, and secret in the preference file located at ~/.inst
+        This option runs the canvas data configuration and stores the key, and secret in the preference file located at ~/.inst
 
-        If no preference file is detected on first run, the
-        configuration process will automatically run.  This option
-        is mainly for adding canvas if other Instructure APIs have
-        already been used, such as studio or canvas.
+        If no preference file is detected on first run, the configuration process will automatically run.  This option is mainly for adding canvas if other Instructure APIs have already been used, such as studio or canvas.
 
         cdata config stores the following values in ~/.inst:
         data_secret="<secret>"
@@ -44,75 +34,59 @@ OPTIONS
         -d also requires that -o <path> be included in the query.
 
     -h
-        Usage help.  This lists all the available options with
-        descriptions and examples.
+        Usage help.  This lists all the available options with descriptions and examples.
 
     -k
-        This option allows you to pass a canvas data key instead of
-        using one stored in the config file.
+        This option allows you to pass a canvas data key instead of using one stored in the config file.
 
-        -k also requires that -m <secret> be included in the query.
-        cdata will not allow you to pass one authentication parameter
-        and read the others from config.
+        -k also requires that -m <secret> be included in the query. cdata will not allow you to pass one authentication parameter and read the others from config.
 
     -l
         License information.
 
     -m
-        This option allows you to pass a canvas data secret instead of
-        using one stored in the config file.
+        This option allows you to pass a canvas data secret instead of using one stored in the config file.
 
-        -m also requires that -k <key> be included in the query.
-        cdata will not allow you to pass one authentication parameter
-        and read the others from config.
+        -m also requires that -k <key> be included in the query. cdata will not allow you to pass one authentication parameter and read the others from config.
 
     -o <path>
         This option outputs the return to a specified path and/or file.
 
         When used with -d the path must be a directory.
 
-        When an output is specified, cdata will always set the output
-        rendered to "plain", even if it is explicitly specified.
+        When an output is specified, cdata will always set the output rendered to "plain", even if it is explicitly specified.
+
+        If a directory is specified then the file will be saved as a safe named version of the api method suffixed with an epoch timestamp, e.g. "schema/latest" is saved as "schema_latest_<epoch>"
 
     -q <quantity>
-        This option allows you to set the limit value of the number
-        of dumps to retrieve. The default is 50 if this is not set.
+        This option allows you to set the limit value of the number of dumps to retrieve. The default is 50 if this is not set.
 
-        When performing multiple queries it is recommended to set -q <quantity>
-        to a higher value to avoid being rate limited.
+        When performing multiple queries it is recommended to set -q <quantity> to a higher value to avoid being rate limited.
 
     -r <renderer>
-        This option allows you to specify the render method of the
-        the return from canvas.  Available options are:
+        This option allows you to specify the render method of the the return from canvas.  Available options are:
 
-        "color" (default) This will use json (npm) to format the
-        return and will use pygmentize (pip) to color the return.
+        "color" | "c" (default) This will use `jq` to format the and color the return.
 
-        "plain" This option will return the raw JSON object unformatted.
+        "plain" | "p" This option will return the raw JSON object unformatted.
 
-        Plain is always used when when -o <path> is used, even if color
-        is explicitly specified in the command.
+        plain is always used when when -o <path> is used, even if color is explicitly specified in the command.
 
     -s
-        This command will output the complete curl command in a readable
-        format.  It will not execute the command.
+        This command will output the complete curl command in a readable format.  It will not execute the command.
 
     -v
         Version information.
 
 METHOD
-    The method is the URL path to be queried, excluding the
-    domain, subdomain and, /api/account/self/ path.
+    The method is the URL path to be queried, excluding the domain, subdomain and, /api/account/self/ path.
 
     For example if the desired query is:
-    https://portal.inshosteddata.com/api/account/self/dump
+    https://api.inshosteddata.com/api/account/self/dump
     The method is simply:
     dump
 
-    The method can be quoted without issue in the event that
-    the current shell has issues with query parameters.
-    For example when filtering dumps you can use:
-
+    The method can be quoted without issue in the event that the current shell has issues with query parameters. For example when filtering dumps you can use:
     cdata "dump?after=<integer>&limit=<integer>"
 
 EXAMPLES
@@ -129,22 +103,20 @@ EXAMPLES
         cdata -m <secret> -k <key> files/latest
 
     Download the latest dump files
-        cdata -o <path> -d files/latest
+        cdata -d -o <path> files/latest
 
 FILES
     ~/.inst
         Config file, see -c for details.
 
 EXIT CODES
-    1   Unable to overwrite specified output file
-        (or user canceled overwrite)
+    1   Unable to overwrite specified output file (or user canceled overwrite)
 
     2   Invalid option or missing argument
 
     127 Missing dependency
 
-        Unspecified exit codes, or an exit code of 0 represent
-        a successful command.
+        Unspecified exit codes, or an exit code of 0 represent a successful command.
 
 WWW
     https://www.instructure.com/canvas
