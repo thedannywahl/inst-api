@@ -18,6 +18,7 @@ The included scripts require the following dependencies.  The scripts will attem
 * [curl](https://curl.haxx.se/)
 * [sed](https://www.gnu.org/software/sed/)
 * [cut](http://pubs.opengroup.org/onlinepubs/9699919799/utilities/cut.html)
+* [grep](https://www.gnu.org/software/grep/)
 * [getopts](http://pubs.opengroup.org/onlinepubs/9699919799/utilities/getopts.html)
 
 ### External
