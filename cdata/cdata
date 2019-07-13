@@ -24,7 +24,6 @@ ver="1.0.0"
 $(insthelp checkdeps) > /dev/null 2>&1
 curlopts=$(insthelp curlopts)
 outputrenderer=$(insthelp setrenderer)
-download=false
 
 # PREF FILE ####################################################################
 # ##############################################################################
@@ -114,7 +113,7 @@ else
         m)
           data_secret="$OPTARG" ;;
         o)
-          outputpath=$(insthelp setoutput $download $OPTARG ${BASH_ARGV[0]})
+          outputpath=$(insthelp setoutput $OPTARG ${BASH_ARGV[0]} $download)
           if [ "$outputpath" = "ERR" ]; then exit 1; fi ;;
         \?)
           printf >&2 "Invalid option: \`-$OPTARG\`\r\n"

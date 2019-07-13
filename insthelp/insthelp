@@ -478,9 +478,9 @@ checkdeps() {
 # OUTPUT FILE ##################################################################
 # ##############################################################################
 setoutput() {
-  local download=$1
-  local file=$2
-  local call=$3
+  local file=$1
+  local call=$2
+  local download=$3
   local err="ERR"
   if [ "$download" = true ]; then
     if [ ! -d "$file" ]; then

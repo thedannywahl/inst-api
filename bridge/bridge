@@ -25,7 +25,6 @@ $(insthelp checkdeps) > /dev/null 2>&1
 curlopts=$(insthelp curlopts)
 outputrenderer=$(insthelp setrenderer)
 httpmethod=$(insthelp sethttp)
-download=false
 
 # PREF FILE ####################################################################
 # ##############################################################################
@@ -79,7 +78,7 @@ else
         t)
           bridge_token="$OPTARG" ;;
         o)
-          outputpath=$(insthelp setoutput $download $OPTARG ${BASH_ARGV[0]})
+          outputpath=$(insthelp setoutput $OPTARG ${BASH_ARGV[0]})
           if [ "$outputpath" = "ERR" ]; then exit 1; fi ;;
         F)
           formopts="$formopts -F $OPTARG" ;;

@@ -31,19 +31,19 @@ METHOD
     setconfig <command>
       setconfig saves configuration details for the source command to the configuration file (~/.inst).
 
-    setoutput <download> <file> [call]
+    setoutput <file> [call] [download]
       setoutput builds an output file path and name for the return of the source command and returns it.
 
       the download parameter is a boolean flag.
 
       setoutput will automatically generate safe filenames based on API methods and an epoch timestamp then output them as JSON when a directory is passed. Example:
 
-      insthelp setoutput false ~/Desktop/ "path/to/resource"
+      insthelp setoutput ~/Desktop/ "path/to/resource"
       ~/Desktop/path_to_resource_1562961260.json
 
       However, a full filename can be passed and it will be respected. Additionally, it is not required to pass the API method in this case. Example:
 
-      insthelp setoutput false ~Desktop/important.txt
+      insthelp setoutput ~Desktop/important.txt
       ~/Desktop/important.txt
 
       setoutput will not attempt to create directories.  It will prompt a user asking to overwrite an existing file.
