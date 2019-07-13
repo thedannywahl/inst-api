@@ -108,7 +108,7 @@ elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
   exit 2
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
-    while getopts ":hlvcasp:q:r:X:t:d:o:F:" opt; do
+    while getopts ":hlvcasp:q:r:x:X:t:d:o:f:F:" opt; do
       case $opt in
         h)
           $(insthelp verbosehelp $cmd)
@@ -132,7 +132,7 @@ else
           pageint="$OPTARG" ;;
         r)
           outputrenderer=$(insthelp setrenderer $OPTARG) ;;
-        X)
+        X|x)
           $(insthelp sethttp $OPTARG) ;;
         d)
           canvas_domain="$OPTARG" ;;
@@ -141,7 +141,7 @@ else
         o)
           outputpath=$(insthelp setoutput $OPTARG ${BASH_ARGV[0]})
           if [ "$outputpath" = "ERR" ]; then exit 1; fi ;;
-        F)
+        F|f)
           formopts="$formopts -F $OPTARG" ;;
         \?)
           printf >&2 "Invalid option: \`-$OPTARG\`\r\n"

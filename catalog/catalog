@@ -108,7 +108,7 @@ elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
   exit 2
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
-    while getopts ":hlvcasr:X:t:d:o:p:q:F:" opt; do
+    while getopts ":hlvcasr:x:X:t:d:o:p:q:f:F:" opt; do
       case $opt in
         h)
           $(insthelp verbosehelp $cmd)
@@ -124,7 +124,7 @@ else
           exit ;;
         r)
           outputrenderer=$(insthelp setrenderer $OPTARG) ;;
-        X)
+        X|x)
           $(insthelp sethttp $OPTARG) ;;
         d)
           catalog_domain="$OPTARG" ;;
@@ -141,7 +141,7 @@ else
           setcount $OPTARG ;;
         p)
           pageint="$OPTARG" ;;
-        F)
+        F|f)
           formopts="$formopts -F $OPTARG" ;;
         \?)
           printf >&2 "Invalid option: \`-$OPTARG\`\r\n"
