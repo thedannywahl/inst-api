@@ -130,12 +130,12 @@ if [ $? -gt 0 ]; then
   printf >&2 "Unable to generate a session.  Please ensure that your credentials are accurate.\r\n"
   exit 2
 fi
-token=$(echo "$session" | python -c 'import sys, json; print json.load(sys.stdin)["session"]["token"]')
+token=$(echo "$session" | jq -r .session.token)
 if [ $? -gt 0 ]; then
   printf >&2 "Unable to find session token.\r\n"
   exit 2
 fi
-userid=$(echo "$session" | python -c 'import sys, json; print json.load(sys.stdin)["session"]["user"]["id"]')
+userid=$(echo "$session" | [jq -r .session.user.id)
 if [ $? -gt 0 ]; then
   printf >&2 "Unable to find session userid.\r\n"
   exit 2
