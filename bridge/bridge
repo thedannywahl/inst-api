@@ -46,10 +46,12 @@ fi
 
 formopts=""
 if [ $# -eq 0 ] && [ ! -f ~/.inst ]; then
-  readconfig
-  help
+  $(insthelp readconfig $cmd)
+  $(insthelp help $cmd)
+  exit 2
 elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
-  help
+$(insthelp help $cmd)
+exit 2
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
     while getopts ":hlvcsr:X:t:d:o:F:" opt; do
@@ -111,7 +113,7 @@ fi
 # BUILD COMMAND ################################################################
 # ##############################################################################
 if [ -z "$bridge_domain" ] && [ -z "$bridge_token" ]; then
-  readconfig
+  $(insthelp readconfig $cmd)
 elif [ -z "$bridge_domain" ] || [ -z "$bridge_token" ]; then
   printf >&2 "Both \`-d\` and \`-t\` are requied when not using a config file\r\n"
   $(insthelp help $cmd)
@@ -136,7 +138,7 @@ else
   command="curl $curlopts -H \"Authorization: Basic $bridge_token\" -X $httpmethod \"https://$bridge_domain.bridgeapp.com/api/$path\" $formopts $outputrenderer $outputpath"
 fi
 if [ "$sample" = true ]; then
-  echo "$command"
+  printf >&2 "$command\r\n"
 else
   eval $command
 fi
