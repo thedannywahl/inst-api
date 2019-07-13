@@ -30,7 +30,7 @@ httpmethod=$(insthelp sethttp)
 # ##############################################################################
 if [ -f ~/.inst ]; then
   . ~/.inst
-  if [ -z $data_key ] || [ -z $data_secret ]; then
+  if [ -z $catalog_domain ] || [ -z $catalog_token ]; then
    $(insthelp setconfig $cmd)
    exit
   fi

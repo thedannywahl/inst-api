@@ -30,7 +30,7 @@ httpmethod=$(insthelp sethttp)
 # ##############################################################################
 if [ -f ~/.inst ]; then
   . ~/.inst
-  if [ -z $data_key ] || [ -z $data_secret ]; then
+  if [ -z $canvas_domain ] || [ -z $canvas_token ]; then
    $(insthelp setconfig $cmd)
    exit
   fi

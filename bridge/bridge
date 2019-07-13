@@ -31,7 +31,7 @@ httpmethod=$(insthelp sethttp)
 
 if [ -f ~/.inst ]; then
   . ~/.inst
-  if [ -z $data_key ] || [ -z $data_secret ]; then
+  if [ -z $bridge_domain ] || [ -z $bridge_token ]; then
    $(insthelp setconfig $cmd)
    exit
   fi
