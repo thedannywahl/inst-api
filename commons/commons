@@ -109,7 +109,6 @@ fi
 
 # BUILD COMMAND ################################################################
 # ##############################################################################
-
 if [ -z "$canvas_domain" ] && [ -z "$canvas_token" ]; then
   $(insthelp readconfig $cmd)
 elif [ -z "$canvas_domain" ] || [ -z "$canvas_token" ]; then
@@ -124,9 +123,6 @@ fi
 
 # START SESSION ################################################################
 # ##############################################################################
-JWT=""
-session=""
-curlopts="--tlsv1.2 --retry 2 --retry-connrefused -s -S -g"
 JWT=$(curl $curlopts -H "Authorization: Bearer $canvas_token" -X GET "https://$canvas_domain.instructure.com/api/lti/accounts/self/jwt_token?tool_launch_url=https://lor.instructure.com/api/lti" | python -c 'import sys, json; print json.load(sys.stdin)["jwt_token"]')
 if [ $? -gt 0 ]; then
   printf >&2 "Unable to generate a JSON Web Token.  Please ensure that your credentials are accurate.\r\n"
