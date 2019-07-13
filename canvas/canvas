@@ -98,7 +98,6 @@ getpages() {
 
 # PARSE OPTS ###################################################################
 # ##############################################################################
-
 formopts=""
 if [ $# -eq 0 ] && [ ! -f ~/.inst ]; then
   $(insthelp readconfig $cmd)
@@ -173,7 +172,6 @@ fi
 
 # BUILD COMMAND ################################################################
 # ##############################################################################
-
 if [ -z "$canvas_domain" ] && [ -z "$canvas_token" ]; then
   $(insthelp readconfig $cmd)
 elif [ $canvas_domain = "beta" ] || [ $canvas_domain = "test" ]; then
@@ -189,7 +187,6 @@ fi
 if [ -n "$outputpath" ] && [ -n "$outputrenderer" ]; then
   outputrenderer=""
 fi
-
 
 prefix=""
 if [ "${path:0:5}" == "files" ] && [[ $path == *"download_frd=1"* ]]; then
