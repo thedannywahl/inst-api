@@ -123,12 +123,12 @@ fi
 
 # START SESSION ################################################################
 # ##############################################################################
-JWT=$(curl $curlopts -H "Authorization: Bearer $canvas_token" -X GET "https://$canvas_domain.instructure.com/api/lti/accounts/self/jwt_token?tool_launch_url=https://lor.instructure.com/api/lti" | python -c 'import sys, json; print json.load(sys.stdin)["jwt_token"]')
+JWT=$(curl $curlopts -H "Authorization: Bearer $canvas_token" -X GET "https://$canvas_domain.instructure.com/api/lti/accounts/self/jwt_token?tool_launch_url=https://lor.instructure.com/api/lti" | jq -r .jwt_token)
 if [ $? -gt 0 ]; then
   printf >&2 "Unable to generate a JSON Web Token.  Please ensure that your credentials are accurate.\r\n"
   exit 2
 fi
-session=$(curl $curlopts -H "Content-Type: application/json" --data '{"jwt_token":"'$JWT'"}' -X POST "https://lor.instructure.com/api/sessions" | python -c 'import sys, json; print json.load(sys.stdin)["sessionId"]')
+session=$(curl $curlopts -H "Content-Type: application/json" --data '{"jwt_token":"'$JWT'"}' -X POST "https://lor.instructure.com/api/sessions" | jq -r .sessionId)
 if [ $? -gt 0 ]; then
   printf >&2 "Unable to generate a session.  Please ensure that your credentials are accurate.\r\n"
   exit 2
