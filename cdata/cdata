@@ -20,7 +20,7 @@
 # HELPER FUNCTIONS #############################################################
 # ##############################################################################
 cmd=${0##*/}
-ver="1.0.0"
+ver="1.0.1"
 $(insthelp checkdeps) > /dev/null 2>&1
 curlopts=$(insthelp curlopts)
 outputrenderer=$(insthelp setrenderer)
