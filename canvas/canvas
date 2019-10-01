@@ -41,9 +41,9 @@ fi
 
 # PAGINATION ###################################################################
 # ##############################################################################
-query=$(insthelp setquery)
+pagecount=1
 pageint=1
-page="${query}page=${pageint}"
+perpage=10
 
 nextpage() {
   pageint=$((pageint+1))
@@ -52,12 +52,8 @@ nextpage() {
 
 setpage() {
   local n=$1
-  page="${query}page=${n}"
+  page=$n
 }
-
-setpage $pageint
-query=$(insthelp setquery $page$perpage)
-perpage="${query}per_page=10"
 
 setcount() {
   local n=$1
@@ -66,6 +62,15 @@ setcount() {
   else
     perpage=$n
   fi
+}
+
+makepage() {
+  query=$(insthelp setquery $path)
+  page="${query}page=${pageint}"
+}
+
+makeperpage() {
+  query=$(insthelp setquery $path$page)
   perpage="${query}per_page=${perpage}"
 }
 
@@ -127,7 +132,7 @@ else
         s)
           sample=true ;;
         q)
-          setcount $OPTARG ;;
+          perpage="$OPTARG" ;;
         p)
           pageint="$OPTARG" ;;
         r)
@@ -202,7 +207,8 @@ else
   prefix="api/v1/"
 fi
 
-pagecount=1
+makepage
+makeperpage
 if [ "$getpages" = true ] && [ "$httpmethod" == "GET" ] && [ "$prefix" == "api/v1/" ]; then
   command="curl $curlopts -I -X $httpmethod \"https://$canvas_domain.instructure.com/$prefix$path$page$perpage\""
   getpages "$command"
