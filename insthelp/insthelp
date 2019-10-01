@@ -177,7 +177,6 @@ sethttp() {
 # PREF FILE ####################################################################
 ################################################################################
 checkdotfile() {
-  printf >&2 "CHECKDOTFILE\r\n"
   local dotfile=$1
   local dotfileexists=$2
   if [ -f $dotfile ]; then
@@ -187,37 +186,28 @@ checkdotfile() {
 }
 
 checkvault() {
-  printf >&2 "CHECKVAULT\r\n"
   local vault=$1
-  printf >&2 "Vault: $vault\r\n"
   local vaults=$2
-  printf >&2 "Vaults: $vaults\r\n"
   local vaultexists=$3
-  printf >&2 "Vaultexists 3? $vaultexists\r\n"
   if grep -q $vault <<< $vaults; then
     vaultexists=true
   else
     vaultexists=false
   fi
-  printf >&2 "Vault Exists 4? $vaultexists\r\n"
   echo $vaultexists
 }
 
 checkneedsmigrate() {
-  printf >&2 "CHECKNEEDSMIGRATE\r\n"
   local vaults=($(vaulted ls))
-  printf >&2 "Vaults: ${vaults[*]}\r\n"
   local vault="inst-api"
   local vaultexists=false
-  printf >&2 "vault exists 1? $vaultexists\r\n"
   local dotfile=~/.inst
   local dotfileexists=false
   dotfileexists=$(checkdotfile $dotfile $dotfileexists)
   vaultexists=$(checkvault $vault $vaults $vaultexists)
-  printf >&2 "vault exists 5? $vaultexists\r\n"
   if $dotfileexists && $vaultexists; then
     clear >&2
-    printf >&2 "CHECKNEEDSMIGRATE: inst-api has previously been successfully migrated to vaulted.\r\n"
+    printf >&2 "inst-api has previously been successfully migrated to vaulted.\r\n"
     cleanup
   elif [ $dotfileexists = false ] && [ $vaultexists = false ]; then
     createvault
@@ -228,26 +218,24 @@ checkneedsmigrate() {
 }
 
 createvault() {
-  printf >&2 "CREATEVAULT\r\n"
   clear >&2
   printf >&2 "Welcome to inst-api!"
-  printf >&2 " inst-api stores credentials securely using vaulted.\r\n\r\n"
+  printf >&2 "inst-api stores credentials securely using vaulted.\r\n\r\n"
   printf >&2 "Save your vault (q) and choose a password to secure your keys.\r\n"
   printf >&2 "inst-api will walk you through adding keys to your vault.\r\n"
   hr
   local status=$(vaulted add inst-api >&2)
   if [[ $status -ne 0 ]]; then
-    printf >&2 "CREATEVAULT: Error creating vault. Try again or manually run:\r\n"
+    printf >&2 "Error creating vault. Try again or manually run:\r\n"
     printf >&2 "\`vaulted add inst-api\`\r\n"
     exit 1
   fi
 }
 
 migratevault() {
-  printf >&2 "MIGRATEVAULT\r\n"
   clear >&2
-  printf >&2 "MIGRATEVAULT: inst-api will attempt to migrate to a new vault using vaulted.\r\n"
-  printf >&2 "MIGRATEVAULT: You will be prompted to create a password for your vault.\r\n"
+  printf >&2 "inst-api will attempt to migrate to a new vault using vaulted.\r\n"
+  printf >&2 "You will be prompted to create a password for your vault.\r\n"
   hr
   local json=""
   while IFS= read -r line
@@ -260,9 +248,9 @@ migratevault() {
   local status=$(vaulted load inst-api <<< "$json" >&2)
   if [[ $status -ne 0 ]]; then
     hr
-    printf >&2 "MIGRATEVAULT: An error occured while attempting to migrate to vaulted.\r\n"
-    printf >&2 "MIGRATEVAULT: Try again or manually run:\r\n"
-    printf >&2 "MIGRATEVAULT: vaulted load inst-api <<< \"$json\""
+    printf >&2 "An error occured while attempting to migrate to vaulted.\r\n"
+    printf >&2 "Try again or manually run:\r\n"
+    printf >&2 "vaulted load inst-api <<< \"$json\""
     exit 1
   else
     clear >&2
@@ -270,21 +258,18 @@ migratevault() {
 }
 
 editvault() {
-  printf >&2 "EDITVAULT"
   $(vaulted edit inst-api >&2)
 }
 
 cleanup() {
-  printf >&2 "CLEANUP\r\n"
-  printf >&2 "CLEANUP: Warning: legacy file ~/.inst found. For security purposes, it should be removed.\r\n"
-  printf >&2 "CLEANUP: "
-  printf >&2 "CLEANUP: Do you want to remove it now?\r\n"
+  printf >&2 "Warning: legacy file ~/.inst found. For security purposes, it should be removed.\r\n"
+  printf >&2 "Do you want to remove it now?\r\n"
   select ow in "Yes" "No"; do
     case $ow in
       Yes )
         local status=$(rm ~/.inst)
         if [[ $status -ne 0 ]]; then
-          printf >&2 "CLEANUP: Error removing config file. Try again or manually run:\r\n"
+          printf >&2 "Error removing config file. Try again or manually run:\r\n"
           printf >&2 "\`rm ~/.inst\`\r\n"
         else
           clear >&2
@@ -292,16 +277,15 @@ cleanup() {
         break ;;
       No )
         clear >&2
-        printf >&2 "CLEANUP: Warning: legacy file ~/.inst has not been removed.\r\n"
-        printf >&2 "CLEANUP: For security purposes, try again or manually run:\r\n"
-        printf >&2 "CLEANUP: \`rm ~/.inst\`\r\n\r\n"
+        printf >&2 "Warning: legacy file ~/.inst has not been removed.\r\n"
+        printf >&2 "For security purposes, try again or manually run:\r\n"
+        printf >&2 "\`rm ~/.inst\`\r\n\r\n"
         break ;;
     esac
   done
 }
 
 readconfig() {
-  printf >&2 "READCONFIG\r\n"
   checkneedsmigrate
   local cmd=$1
   local -a keys
@@ -331,7 +315,6 @@ readconfig() {
 }
 
 setconfig() {
-  printf >&2 "SETCONFIG\r\n"
   checkneedsmigrate
   local cmd=$1
   case $cmd in
@@ -351,17 +334,15 @@ setconfig() {
 }
 
 tmpdumpvault() {
-  printf >&2 "TMPDUMPVAULT\r\n"
   local tmp=$(vaulted dump inst-api);
   echo $tmp;
 }
 
 bridge_setdomain() {
-  printf >&2 "BRIDGE_SETDOMAIN\r\n"
   local json=$(tmpdumpvault)
   clear >&2
-  printf >&2 "BRIDGE_SETDOMAIN: what is your Bridge subdomain?\r\n"
-  printf >&2 "BRIDGE_SETDOMAIN: https://<subdomain>.bridgeapp.com"
+  printf >&2 "What is your Bridge subdomain?\r\n"
+  printf >&2 "https://<subdomain>.bridgeapp.com"
   read bridgedomain
   json=$(echo $json | jq --arg "bridge_domain" "$bridgedomain" '. * {"vars": {"bridge_domain": $bridge_domain}}')
   local status=$(vaulted load inst-api <<< "$json" >&2)
