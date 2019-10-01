@@ -176,194 +176,398 @@ sethttp() {
 
 # PREF FILE ####################################################################
 ################################################################################
-readconfig() {
-  local cmd=$1
-  local bridgeconfig=("bridge_domain" "bridge_token")
-  local canvasconfig=("canvas_domain" "canvas_token")
-  local catalogconfig=("catalog_domain" "catalog_token")
-  local cdataconfig=("data_key" "data_secret")
-  local commonsconfig=("canvas_domain" "canvas_token")
-  local studioconfig=("studio_domain" "studio_email" "studio_password")
-  local cfg=()
-  case $cmd in
-    bridge)
-      cfg=(${bridgeconfig[@]}) ;;
-    canvas)
-      cfg=(${canvasconfig[@]}) ;;
-    catalog)
-      cfg=(${catalogconfig[@]}) ;;
-    cdata)
-      cfg=(${cdataconfig[@]}) ;;
-    commons)
-      cfg=(${commonsconfig[@]}) ;;
-    studio)
-      cfg=(${studioconfig[@]}) ;;
-  esac
-  if [ -f ~/.inst ]; then
-    . ~/.inst
-    for ((i=0; $i<${#cfg[@]}; i++))
-    do
-      if [ -z ${!cfg[$i]} ]; then
-        printf >&2 "unable to read ${cfg[$i]} from config file \`~/.inst\`\r\n"
-        printf >&2 "It must be manually added or repaired.  Format:\r\n"
-        printf >&2 "${cfg[$i]}=\"<value>\"\r\n"
-        exit 2
-      fi
-    done
+checkdotfile() {
+  printf >&2 "CHECKDOTFILE\r\n"
+  local dotfile=$1
+  local dotfileexists=$2
+  if [ -f $dotfile ]; then
+    dotfileexists=true
+  fi
+  echo $dotfileexists
+}
+
+checkvault() {
+  printf >&2 "CHECKVAULT\r\n"
+  local vault=$1
+  printf >&2 "Vault: $vault\r\n"
+  local vaults=$2
+  printf >&2 "Vaults: $vaults\r\n"
+  local vaultexists=$3
+  printf >&2 "Vaultexists 3? $vaultexists\r\n"
+  if grep -q $vault <<< $vaults; then
+    vaultexists=true
   else
+    vaultexists=false
+  fi
+  printf >&2 "Vault Exists 4? $vaultexists\r\n"
+  echo $vaultexists
+}
+
+checkneedsmigrate() {
+  printf >&2 "CHECKNEEDSMIGRATE\r\n"
+  local vaults=($(vaulted ls))
+  printf >&2 "Vaults: ${vaults[*]}\r\n"
+  local vault="inst-api"
+  local vaultexists=false
+  printf >&2 "vault exists 1? $vaultexists\r\n"
+  local dotfile=~/.inst
+  local dotfileexists=false
+  dotfileexists=$(checkdotfile $dotfile $dotfileexists)
+  vaultexists=$(checkvault $vault $vaults $vaultexists)
+  printf >&2 "vault exists 5? $vaultexists\r\n"
+  if $dotfileexists && $vaultexists; then
     clear >&2
-    printf >&2 "config file \`~/.inst\` not found\r\n"
-    printf >&2 "would you like to create it now?\r\n"
-    select yn in "Yes" "No"; do
-      case $yn in
-        Yes )
-          setconfig; break ;;
-        No )
-          clear >&2
-          printf >&2 "$cmd requires a config file or authentication passed as parameters\r\n"
-          usage $cmd; exit 2 ;;
-      esac
-    done
+    printf >&2 "CHECKNEEDSMIGRATE: inst-api has previously been successfully migrated to vaulted.\r\n"
+    cleanup
+  elif [ $dotfileexists = false ] && [ $vaultexists = false ]; then
+    createvault
+  elif $dotfileexists && [ $vaultexists = false ]; then
+    migratevault
+    cleanup
   fi
 }
 
-setconfig() {
-  local cmd=$1
+createvault() {
+  printf >&2 "CREATEVAULT\r\n"
   clear >&2
-  printf >&2 "DO NOT create a config file on a shared system\r\n"
-  printf >&2 "other system users will be able to authenticate using your\r\n"
-  printf >&2 "saved credentials.  Instead pass authentication as parameters\r\n"
-  printf >&2 "Do you wish to proceed?\r\n"
-  select ok in "Okay" "Cancel"; do
-    case $ok in
-      Okay)
-        touch ~/.inst
-        if [ $? = 0 ]; then
-          case $cmd in
-            bridge)
-               bridge_setdomain; bridge_settoken;;
-            canvas)
-               canvas_setdomain; canvas_settoken;;
-            catalog)
-               catalog_setdomain; catalog_settoken;;
-            cdata)
-               cdata_setkey; cdata_setsecret;;
-            commons)
-               commons_setdomain; commons_settoken;;
-            studio)
-               studio_setdomain; studio_setemail; studio_setpassword;;
-          esac
-          readconfig
+  printf >&2 "Welcome to inst-api!"
+  printf >&2 " inst-api stores credentials securely using vaulted.\r\n\r\n"
+  printf >&2 "Save your vault (q) and choose a password to secure your keys.\r\n"
+  printf >&2 "inst-api will walk you through adding keys to your vault.\r\n"
+  hr
+  local status=$(vaulted add inst-api >&2)
+  if [[ $status -ne 0 ]]; then
+    printf >&2 "CREATEVAULT: Error creating vault. Try again or manually run:\r\n"
+    printf >&2 "\`vaulted add inst-api\`\r\n"
+    exit 1
+  fi
+}
+
+migratevault() {
+  printf >&2 "MIGRATEVAULT\r\n"
+  clear >&2
+  printf >&2 "MIGRATEVAULT: inst-api will attempt to migrate to a new vault using vaulted.\r\n"
+  printf >&2 "MIGRATEVAULT: You will be prompted to create a password for your vault.\r\n"
+  hr
+  local json=""
+  while IFS= read -r line
+  do
+    line=$(echo $line | sed 's/=/":/')
+    line="\"${line}"
+    json="${json}${line},"
+  done < "$dotfile"
+  json="{\"vars\":{${json%?}}}"
+  local status=$(vaulted load inst-api <<< "$json" >&2)
+  if [[ $status -ne 0 ]]; then
+    hr
+    printf >&2 "MIGRATEVAULT: An error occured while attempting to migrate to vaulted.\r\n"
+    printf >&2 "MIGRATEVAULT: Try again or manually run:\r\n"
+    printf >&2 "MIGRATEVAULT: vaulted load inst-api <<< \"$json\""
+    exit 1
+  else
+    clear >&2
+  fi
+}
+
+editvault() {
+  printf >&2 "EDITVAULT"
+  $(vaulted edit inst-api >&2)
+}
+
+cleanup() {
+  printf >&2 "CLEANUP\r\n"
+  printf >&2 "CLEANUP: Warning: legacy file ~/.inst found. For security purposes, it should be removed.\r\n"
+  printf >&2 "CLEANUP: "
+  printf >&2 "CLEANUP: Do you want to remove it now?\r\n"
+  select ow in "Yes" "No"; do
+    case $ow in
+      Yes )
+        local status=$(rm ~/.inst)
+        if [[ $status -ne 0 ]]; then
+          printf >&2 "CLEANUP: Error removing config file. Try again or manually run:\r\n"
+          printf >&2 "\`rm ~/.inst\`\r\n"
         else
           clear >&2
-          printf >&2 "unable to create config file \`~/.inst\`\r\n"
-          printf >&2 "please ensure that you have appropriate permissions\r\n"
-          exit 2
-        fi; break;;
-      Cancel)
+        fi
+        break ;;
+      No )
         clear >&2
-        printf >&2 "Enter your command again passing authentication as parameters\r\n"
-        usage $cmd
-        exit 0;;
+        printf >&2 "CLEANUP: Warning: legacy file ~/.inst has not been removed.\r\n"
+        printf >&2 "CLEANUP: For security purposes, try again or manually run:\r\n"
+        printf >&2 "CLEANUP: \`rm ~/.inst\`\r\n\r\n"
+        break ;;
     esac
   done
-  clear >&2
+}
+
+readconfig() {
+  printf >&2 "READCONFIG\r\n"
+  checkneedsmigrate
+  local cmd=$1
+  local -a keys
+  local cfg=$(vaulted env --format='{{ json .Set }}' inst-api)
+  case $cmd in
+    bridge)
+      keys[0]=$(echo $cfg | jq -r .bridge_domain)
+      keys[1]=$(echo $cfg | jq -r .bridge_token) ;;
+    canvas)
+      keys[0]=$(echo $cfg | jq -r .canvas_domain)
+      keys[1]=$(echo $cfg | jq -r .canvas_token) ;;
+    catalog)
+      keys[0]=$(echo $cfg | jq -r .catalog_domain)
+      keys[1]=$(echo $cfg | jq -r .catalog_token) ;;
+    cdata)
+      keys[0]=$(echo $cfg | jq -r .data_key)
+      keys[1]=$(echo $cfg | jq -r .data_secret) ;;
+    commons)
+      keys[0]=$(echo $cfg | jq -r .canvas_domain)
+      keys[1]=$(echo $cfg | jq -r .canvas_token) ;;
+    studio)
+      keys[0]=$(echo $cfg | jq -r .studio_domain)
+      keys[1]=$(echo $cfg | jq -r .studio_email)
+      keys[2]=$(echo $cfg | jq -r .studio_password) ;;
+  esac
+  echo "${keys[*]}"
+}
+
+setconfig() {
+  printf >&2 "SETCONFIG\r\n"
+  checkneedsmigrate
+  local cmd=$1
+  case $cmd in
+    bridge)
+       bridge_setdomain; bridge_settoken;;
+    canvas)
+       canvas_setdomain; canvas_settoken;;
+    catalog)
+       catalog_setdomain; catalog_settoken;;
+    cdata)
+       cdata_setkey; cdata_setsecret;;
+    commons)
+       commons_setdomain; commons_settoken;;
+    studio)
+       studio_setdomain; studio_setemail; studio_setpassword;;
+  esac
+}
+
+tmpdumpvault() {
+  printf >&2 "TMPDUMPVAULT\r\n"
+  local tmp=$(vaulted dump inst-api);
+  echo $tmp;
 }
 
 bridge_setdomain() {
+  printf >&2 "BRIDGE_SETDOMAIN\r\n"
+  local json=$(tmpdumpvault)
   clear >&2
-  printf >&2 "what is your Bridge subdomain?\r\n"
-  printf >&2 "https://<subdomain>.bridgeapp.com"
+  printf >&2 "BRIDGE_SETDOMAIN: what is your Bridge subdomain?\r\n"
+  printf >&2 "BRIDGE_SETDOMAIN: https://<subdomain>.bridgeapp.com"
   read bridgedomain
-  echo "bridge_domain=\"$bridgedomain\"" >> ~/.inst
+  json=$(echo $json | jq --arg "bridge_domain" "$bridgedomain" '. * {"vars": {"bridge_domain": $bridge_domain}}')
+  local status=$(vaulted load inst-api <<< "$json" >&2)
+  if [[ $status -ne 0 ]]; then
+    hr
+    printf >&2 "An error occured while attempting to add \`bridge_domain\` to vaulted.\r\n"
+    printf >&2 "Try again or manually run:\r\n"
+    printf >&2 "vaulted load inst-api <<< \"$json\""
+    exit 1
+  fi
 }
 
 bridge_settoken() {
+  local json=$(tmpdumpvault)
   clear >&2
   echo >&2 "What is your Bridge API token?\r\n"
   read bridgetoken
-  echo "bridge_token=\"$bridgetoken\"" >> ~/.inst
+  json=$(echo $json | jq --arg "bridge_token" "$bridgetoken" '. * {"vars": {"bridge_token": $bridge_token}}')
+  local status=$(vaulted load inst-api <<< "$json" >&2)
+  if [[ $status -ne 0 ]]; then
+    hr
+    printf >&2 "An error occured while attempting to add \`bridge_token\` to vaulted.\r\n"
+    printf >&2 "Try again or manually run:\r\n"
+    printf >&2 "vaulted load inst-api <<< \"$json\""
+    exit 1
+  fi
 }
 
 canvas_setdomain() {
+  local json=$(tmpdumpvault)
   clear >&2
   printf >&2 "What is your Canvas subdomain?\r\n"
   printf >&2 "https://<subdomain>.instructure.com\r\n"
   read canvasdomain
-  echo "canvas_domain=\"$canvasdomain\"" >> ~/.inst
+  json=$(echo $json | jq --arg "canvas_domain" "$canvasdomain" '. * {"vars": {"canvas_domain": $canvas_domain}}')
+  local status=$(vaulted load inst-api <<< "$json" >&2)
+  if [[ $status -ne 0 ]]; then
+    hr
+    printf >&2 "An error occured while attempting to add \`canvas_domain\` to vaulted.\r\n"
+    printf >&2 "Please try again or you can manually run:\r\n\r\n"
+    printf >&2 "vaulted load inst-api <<< \"$json\""
+    exit 1
+  fi
 }
 
 canvas_settoken() {
+  local json=$(tmpdumpvault)
   clear >&2
-  echo >&2 "What is your Canvas API token?\r\n"
+  printf >&2 "What is your Canvas API token?\r\n"
   read canvastoken
-  echo "canvas_token=\"$canvastoken\"" >> ~/.inst
+  json=$(echo $json | jq --arg "canvas_token" "$canvastoken" '. * {"vars": {"canvas_token": $canvas_token}}')
+  local status=$(vaulted load inst-api <<< "$json" >&2)
+  if [[ $status -ne 0 ]]; then
+    hr
+    printf >&2 "An error occured while attempting to add \`canvas_token\` to vaulted.\r\n"
+    printf >&2 "Please try again or you can manually run:\r\n\r\n"
+    printf >&2 "vaulted load inst-api <<< \"$json\""
+    exit 1
+  fi
 }
 
 catalog_setdomain() {
+  local json=$(tmpdumpvault)
   clear >&2
   printf >&2 "What is your Canvas Catalog subdomain?\r\n"
   echo >&2 "https://<subdomain>.catalog.instructure.com\r\n"
   read catalogdomain
-  echo "catalog_domain=\"$catalogdomain\"" >> ~/.inst
+  json=$(echo $json | jq --arg "catalog_domain" "$catalogdomain" '. * {"vars": {"catalog_domain": $catalog_domain}}')
+  local status=$(vaulted load inst-api <<< "$json" >&2)
+  if [[ $status -ne 0 ]]; then
+    hr
+    printf >&2 "An error occured while attempting to add \`catalog_domain\` to vaulted.\r\n"
+    printf >&2 "Please try again or you can manually run:\r\n\r\n"
+    printf >&2 "vaulted load inst-api <<< \"$json\""
+    exit 1
+  fi
 }
 
 catalog_settoken() {
+  local json=$(tmpdumpvault)
   clear >&2
   printf >&2 "What is your Canvas API token?\r\n"
   read catalogtoken
-  echo "catalog_token=\"$catalogtoken\"" >> ~/.inst
+  json=$(echo $json | jq --arg "catalog_token" "$catalogtoken" '. * {"vars": {"catalog_token": $catalog_token}}')
+  local status=$(vaulted load inst-api <<< "$json" >&2)
+  if [[ $status -ne 0 ]]; then
+    hr
+    printf >&2 "An error occured while attempting to add \`catalog_token\` to vaulted.\r\n"
+    printf >&2 "Please try again or you can manually run:\r\n\r\n"
+    printf >&2 "vaulted load inst-api <<< \"$json\""
+    exit 1
+  fi
 }
 
 cdata_setkey() {
+  local json=$(tmpdumpvault)
   clear >&2
   printf >&2 "What is your Canvas Data key?\r\n"
   read cdatakey
-  echo "data_key=\"$cdatakey\"" >> ~/.inst
+  json=$(echo $json | jq --arg "data_key" "$cdatakey" '. * {"vars": {"data_key": $data_key}}')
+  local status=$(vaulted load inst-api <<< "$json" >&2)
+  if [[ $status -ne 0 ]]; then
+    hr
+    printf >&2 "An error occured while attempting to add \`data_key\` to vaulted.\r\n"
+    printf >&2 "Please try again or you can manually run:\r\n\r\n"
+    printf >&2 "vaulted load inst-api <<< \"$json\""
+    exit 1
+  fi
 }
 
 cdata_setsecret() {
+  local json=$(tmpdumpvault)
   clear >&2
   printf >&2 "What is your Canvas Data secret?\r\n"
   read cdatasecret
-  echo "data_secret=\"$cdatasecret\"" >> ~/.inst
+  json=$(echo $json | jq --arg "data_secret" "$cdatasecret" '. * {"vars": {"data_secret": $data_secret}}')
+  local status=$(vaulted load inst-api <<< "$json" >&2)
+  if [[ $status -ne 0 ]]; then
+    hr
+    printf >&2 "An error occured while attempting to add \`data_secret\` to vaulted.\r\n"
+    printf >&2 "Please try again or you can manually run:\r\n\r\n"
+    printf >&2 "vaulted load inst-api <<< \"$json\""
+    exit 1
+  fi
 }
 
 commons_setdomain() {
+  local json=$(tmpdumpvault)
   clear >&2
   printf >&2 "What is your Canvas subdomain?\r\n"
   printf >&2 "https://<subdomain>.instructure.com\r\n"
   read canvasdomain
-  echo "canvas_domain=\"$canvasdomain\"" >> ~/.inst
+  json=$(echo $json | jq --arg "canvas_domain" "$canvasdomain" '. * {"vars": {"canvas_domain": $canvas_domain}}')
+  local status=$(vaulted load inst-api <<< "$json" >&2)
+  if [[ $status -ne 0 ]]; then
+    hr
+    printf >&2 "An error occured while attempting to add \`canvas_domain\` to vaulted.\r\n"
+    printf >&2 "Please try again or you can manually run:\r\n\r\n"
+    printf >&2 "vaulted load inst-api <<< \"$json\""
+    exit 1
+  fi
 }
 
 commons_settoken() {
+  local json=$(tmpdumpvault)
   clear >&2
   printf >&2 "What is your Canvas API token?\r\n"
   read canvastoken
-  echo "canvas_token=\"$canvastoken\"" >> ~/.inst
+  json=$(echo $json | jq --arg "canvas_token" "$canvastoken" '. * {"vars": {"canvas_token": $canvas_token}}')
+  local status=$(vaulted load inst-api <<< "$json" >&2)
+  if [[ $status -ne 0 ]]; then
+    hr
+    printf >&2 "An error occured while attempting to add \`canvas_token\` to vaulted.\r\n"
+    printf >&2 "Please try again or you can manually run:\r\n\r\n"
+    printf >&2 "vaulted load inst-api <<< \"$json\""
+    exit 1
+  fi
 }
 
 studio_setdomain() {
+  local json=$(tmpdumpvault)
   clear >&2
   printf >&2 "What is your Studio subdomain?\r\n"
   printf >&2 "https://<subdomain>.instructuremedia.com\r\n"
   read studiodomain
-  echo "studio_domain=\"$studiodomain\"" >> ~/.inst
+  json=$(echo $json | jq --arg "studio_domain" "$studiodomain" '. * {"vars": {"studio_domain": $studio_domain}}')
+  local status=$(vaulted load inst-api <<< "$json" >&2)
+  if [[ $status -ne 0 ]]; then
+    hr
+    printf >&2 "An error occured while attempting to add \`studio_domain\` to vaulted.\r\n"
+    printf >&2 "Please try again or you can manually run:\r\n\r\n"
+    printf >&2 "vaulted load inst-api <<< \"$json\""
+    exit 1
+  fi
 }
 
 studio_setemail() {
+  local json=$(tmpdumpvault)
   clear >&2
   printf >&2 "What is your Studio login email address?\r\n"
   read studioemail
-  echo "studio_email=\"$studioemail\"" >> ~/.inst
+  json=$(echo $json | jq --arg "studio_email" "$studioemail" '. * {"vars": {"studio_email": $studio_email}}')
+  local status=$(vaulted load inst-api <<< "$json" >&2)
+  if [[ $status -ne 0 ]]; then
+    hr
+    printf >&2 "An error occured while attempting to add \`studio_email\` to vaulted.\r\n"
+    printf >&2 "Please try again or you can manually run:\r\n\r\n"
+    printf >&2 "vaulted load inst-api <<< \"$json\""
+    exit 1
+  fi
 }
 
 studio_setpassword() {
+  local json=$(tmpdumpvault)
   clear >&2
   printf >&2 "What is your Studio login password?\r\n"
-  read arcpassword
-  echo "studio_password=\"$studiopassword\"" >> ~/.inst
+  read studiopassword
+  json=$(echo $json | jq --arg "studio_password" "$studiopassword" '. * {"vars": {"studio_password": $studio_password}}')
+  local status=$(vaulted load inst-api <<< "$json" >&2)
+  if [[ $status -ne 0 ]]; then
+    hr
+    printf >&2 "An error occured while attempting to add \`studio_password\` to vaulted.\r\n"
+    printf >&2 "Please try again or you can manually run:\r\n\r\n"
+    printf >&2 "vaulted load inst-api <<< \"$json\""
+    exit 1
+  fi
 }
 
 # HELP STUFF ###################################################################
@@ -388,8 +592,7 @@ verbosehelp() {
 
 usage() {
   local cmd=$1
-  printf >&2 "Usage: $cmd [options] method\r\r\nHelp:  $cmd -h\r\n"
-
+  printf >&2 "Usage: $cmd [options] method\r\nHelp:  $cmd -h\r\n"
 }
 
 version() {
@@ -406,7 +609,7 @@ license() {
 }
 
 # DEPENDENCIES #################################################################
-# Requires: jq, curl, sed, and getopts                                         #
+# Requires: jq, vaulted, curl, sed, and getopts                                #
 # ##############################################################################
 dependency() {
   declare -a dep=("$@")
@@ -416,7 +619,7 @@ dependency() {
 prompt() {
   declare -a dep=("$@")
   clear >&2
-  printf >&2 "inst-api requires ${dep[1]} (${dep[3]}) but it's not installed"
+  printf >&2 "inst-api requires ${dep[1]} (${dep[3]}) but it's not installed\r\n"
   printf >&2 "would you like to install it now?"
   select yn in "Yes" "No"; do
     case $yn in
@@ -429,7 +632,7 @@ prompt() {
 install() {
   declare -a dep=("$@")
   clear >&2
-  printf >&2 "inst-api will attempt to install ${dep[1]} (${dep[3]})"
+  printf >&2 "inst-api will attempt to install ${dep[1]} (${dep[3]})\r\n"
   hr
   if [ ${dep[3]} = "brew" ]; then
     command -v ${dep[3]} > /dev/null 2>&1 && brew install "${dep[1]}" >&2 || manualinstall ${dep[@]} ""
@@ -441,7 +644,7 @@ install() {
     manualinstall ${dep[@]} $status
   fi
   hr
-  printf >&2 "${dep[1]} (${dep[3]}) successfully installed"
+  printf >&2 "${dep[1]} (${dep[3]}) successfully installed\r\n"
   clear >&2
 }
 
@@ -451,25 +654,26 @@ manualinstall() {
     hr
     printf "inst-api was unable to install ${dep[1]} (${dep[3]})"
     if [ ${dep[3]} = "brew" ]; then
-      printf >&2 "\`${dep[3]} install ${dep[1]}\` failed"
+      printf >&2 "\`${dep[3]} install ${dep[1]}\` failed\r\n"
     else
-      printf >&2 "\`${dep[1]}\` is a system package"
+      printf >&2 "\`${dep[1]}\` is a system package\r\n"
     fi
   fi
   if [ ${dep[3]} = "brew" ]; then
-    printf >&2 "Try using \`${dep[3]} install ${dep[1]}\` to manually install"
+    printf >&2 "Try using \`${dep[3]} install ${dep[1]}\` to manually install\r\n"
   else
-    printf >&2 "${dep[1]} must be installed using a system package manager"
+    printf >&2 "${dep[1]} must be installed using a system package manager\r\n"
   fi
   exit 127
 }
 
 checkdeps() {
   jq=("" "jq" "jq" "brew")
+  vaulted=("" "vaulted" "vaulted" "brew")
   shellgetopts=("" "getopts" "getopts" "system")
   curl=("" "curl" "curl" "system")
   sed=("" "sed" "sed" "systtem")
-  dependencies=(JQ=${jq[@]} SHELLGETOPTS=${shellgetopts[@]} CURL=${curl[@]} SED=${sed[@]})
+  dependencies=(JQ=${jq[@]} VAULTED=${vaulted[@]} SHELLGETOPTS=${shellgetopts[@]} CURL=${curl[@]} SED=${sed[@]})
   for dep in "${dependencies[@]}"
     do dependency ${dep[@]}
   done
@@ -558,6 +762,8 @@ case $fnc in
     setquery $2 ;;
   sethttp)
     sethttp $2 ;;
+  vault)
+    editvault ;;
   "")
     metahelp ${0##*/} $ver;;
 esac
