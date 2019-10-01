@@ -28,15 +28,12 @@ httpmethod=$(insthelp sethttp)
 
 # PREF FILE ####################################################################
 # ##############################################################################
-if [ -f ~/.inst ]; then
-  . ~/.inst
-  if [ -z $canvas_domain ] || [ -z $canvas_token ]; then
-   $(insthelp setconfig $cmd)
-   exit
-  fi
-else
- $(insthelp setconfig $cmd)
- exit
+cfg=($(insthelp readconfig $cmd))
+canvas_domain=${cfg[0]}
+canvas_token=${cfg[1]}
+if [ -z $canvas_domain ] || [ -z $canvas_token ]; then
+  $(insthelp setconfig $cmd)
+  exit
 fi
 
 # PARSE OPTS ###################################################################
