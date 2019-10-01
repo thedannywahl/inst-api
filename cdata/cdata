@@ -27,15 +27,12 @@ outputrenderer=$(insthelp setrenderer)
 
 # PREF FILE ####################################################################
 # ##############################################################################
-if [ -f ~/.inst ]; then
-  . ~/.inst
-  if [ -z $data_key ] || [ -z $data_secret ]; then
-   $(insthelp setconfig $cmd)
-   exit
-  fi
-else
- $(insthelp setconfig $cmd)
- exit
+cfg=($(insthelp readconfig $cmd))
+data_key=${cfg[0]}
+data_secret=${cfg[1]}
+if [ -z $data_key ] || [ -z $data_secret ]; then
+  $(insthelp setconfig $cmd)
+  exit
 fi
 
 # QUERY PARAMS #################################################################
