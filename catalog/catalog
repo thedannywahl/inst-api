@@ -28,15 +28,12 @@ httpmethod=$(insthelp sethttp)
 
 # PREF FILE ####################################################################
 # ##############################################################################
-if [ -f ~/.inst ]; then
-  . ~/.inst
-  if [ -z $catalog_domain ] || [ -z $catalog_token ]; then
-   $(insthelp setconfig $cmd)
-   exit
-  fi
-else
- $(insthelp setconfig $cmd)
- exit
+cfg=($(insthelp readconfig $cmd))
+catalog_domain=${cfg[0]}
+catalog_token=${cfg[1]}
+if [ -z $catalog_domain ] || [ -z $catalog_token ]; then
+  $(insthelp setconfig $cmd)
+  exit
 fi
 
 # PAGINATION ###################################################################
