@@ -72,7 +72,7 @@ else
         r)
           outputrenderer=$(insthelp setrenderer $OPTARG) ;;
         X|x)
-          $(insthelp sethttp $OPTARG) ;;
+          httpmethod=$(insthelp sethttp $OPTARG) ;;
         d)
           bridge_domain="$OPTARG" ;;
         t)
