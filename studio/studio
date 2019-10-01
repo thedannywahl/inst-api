@@ -28,15 +28,13 @@ httpmethod=$(insthelp sethttp)
 
 # PREF FILE ####################################################################
 # ##############################################################################
-if [ -f ~/.inst ]; then
-  . ~/.inst
-  if [ -z $studio_domain ] || [ -z $studio_email ] || [ -z $studio_password ]; then
-   $(insthelp setconfig $cmd)
-   exit
-  fi
-else
- $(insthelp setconfig $cmd)
- exit
+cfg=($(insthelp readconfig $cmd))
+studio_domain=${cfg[0]}
+studio_email=${cfg[1]}
+studio_password=${cfg[2]}
+if [ -z $studio_domain ] || [ -z $studio_email ] || [ -z $studio_password ]; then
+  $(insthelp setconfig $cmd)
+  exit
 fi
 
 # PARSE OPTS ###################################################################
@@ -109,7 +107,7 @@ else
   fi
 fi
 
-# BUILD COMMAND ################################################################
+# CHECK CONFIG #################################################################
 # ##############################################################################
 if [ -z "$studio_domain" ] && [ -z "$studio_email" ] && [ -z "$studio_password" ]; then
   $(insthelp readconfig $cmd)
