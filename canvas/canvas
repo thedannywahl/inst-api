@@ -28,7 +28,7 @@ httpmethod=$(insthelp sethttp)
 
 # PREF FILE ####################################################################
 # ##############################################################################
-$cfg=($(insthelp readconfig $cmd))
+cfg=($(insthelp readconfig $cmd))
 canvas_domain=${cfg[0]}
 canvas_token=${cfg[1]}
 if [ -z $canvas_domain ] || [ -z $canvas_token ]; then
