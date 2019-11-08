@@ -113,7 +113,7 @@ elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
   exit 2
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
-    while getopts ":hlvcasgi:p:q:r:x:X:t:d:o:f:F:" opt; do
+    while getopts ":hlvcasg:i:p:q:r:x:X:t:d:o:f:F:" opt; do
       case $opt in
         h)
           $(insthelp verbosehelp $cmd)
@@ -132,7 +132,8 @@ else
         s)
           sample=true ;;
         g)
-          graphql=true ;;
+          graphql=true
+          graphql_operation="$OPTARG" ;;
         i)
           graphql_variables="$OPTARG" ;;
         q)
@@ -218,8 +219,15 @@ fi
 if [ "$graphql" = true ]; then
   if [ "${path:0:6}" == "query " ]; then
     path=${path:6}
+  elif [ "${path:0:9}" == "mutation " ]; then
+    path=${path:9}
+  elif [ "${path:0:13}" == "subscription " ]; then
+    path=${path:13}
   fi
-  command="curl $curlopts -X POST \"https://$canvas_domain.instructure.com/$prefix\" -d query='query $path' -d '$graphql_variables' $outputrenderer $outputpath"
+  if [ "$graphql_operation" != "query" ] && [ "$graphql_operation" != "mutation" ] && [ "$graphql_operation" != "subscription" ]; then
+    graphql_operation="query"
+  fi
+  command="curl $curlopts -X POST \"https://$canvas_domain.instructure.com/$prefix\" -d query='$graphql_operation $path' -d '$graphql_variables' $outputrenderer $outputpath"
   if [ "$sample" = true ]; then
     printf >&2 "$command\r\n"
   else
