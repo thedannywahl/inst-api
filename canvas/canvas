@@ -113,7 +113,7 @@ elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
   exit 2
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
-    while getopts ":hlvcasp:q:r:x:X:t:d:o:f:F:" opt; do
+    while getopts ":hlvcasgi:p:q:r:x:X:t:d:o:f:F:" opt; do
       case $opt in
         h)
           $(insthelp verbosehelp $cmd)
@@ -131,6 +131,10 @@ else
           getpages=true ;;
         s)
           sample=true ;;
+        g)
+          graphql=true ;;
+        i)
+          graphql_variables="$OPTARG" ;;
         q)
           perpage="$OPTARG" ;;
         p)
@@ -204,31 +208,47 @@ if [ "${path:0:5}" == "files" ] && [[ $path == *"download_frd=1"* ]]; then
   outputrenderer=""
 else
   curlopts="$curlopts -H \"Authorization: Bearer $canvas_token\""
-  prefix="api/v1/"
+  if [ "$graphql" = true ]; then
+    prefix="api/graphql"
+  else
+    prefix="api/v1/"
+  fi
 fi
 
-makepage
-makeperpage
-if [ "$getpages" = true ] && [ "$httpmethod" == "GET" ] && [ "$prefix" == "api/v1/" ]; then
-  command="curl $curlopts -I -X $httpmethod \"https://$canvas_domain.instructure.com/$prefix$path$page$perpage\""
-  getpages "$command"
-fi
-
-if [ $httpmethod != "GET" ]; then
-  perpage=""
-  page=""
-  pagecount=1
-fi
-
-while
-  command="curl $curlopts -X $httpmethod \"https://$canvas_domain.instructure.com/$prefix$path$page$perpage\" $formopts $outputrenderer $outputpath"
+if [ "$graphql" = true ]; then
+  if [ "${path:0:6}" == "query " ]; then
+    path=${path:6}
+  fi
+  command="curl $curlopts -X POST \"https://$canvas_domain.instructure.com/$prefix\" -d query='query $path' -d '$graphql_variables' $outputrenderer $outputpath"
   if [ "$sample" = true ]; then
     printf >&2 "$command\r\n"
   else
     eval $command
   fi
-  (( $pageint < $pagecount ))
-do
-  nextpage
-  continue
-done
+else
+  makepage
+  makeperpage
+  if [ "$getpages" = true ] && [ "$httpmethod" == "GET" ] && [ "$prefix" == "api/v1/" ]; then
+    command="curl $curlopts -I -X $httpmethod \"https://$canvas_domain.instructure.com/$prefix$path$page$perpage\""
+    getpages "$command"
+  fi
+
+  if [ $httpmethod != "GET" ]; then
+    perpage=""
+    page=""
+    pagecount=1
+  fi
+
+  while
+    command="curl $curlopts -X $httpmethod \"https://$canvas_domain.instructure.com/$prefix$path$page$perpage\" $formopts $outputrenderer $outputpath"
+    if [ "$sample" = true ]; then
+      printf >&2 "$command\r\n"
+    else
+      eval $command
+    fi
+    (( $pageint < $pagecount ))
+  do
+    nextpage
+    continue
+  done
+fi
