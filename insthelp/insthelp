@@ -18,7 +18,7 @@
 
 # HELPER FUNCTIONS #############################################################
 # ##############################################################################
-ver="1.0.0"
+ver="1.0.1"
 
 hr() {
   local start=$'\e(0' end=$'\e(B' line='qqqqqqqqqqqqqqqq'
@@ -164,6 +164,8 @@ sethttp() {
       httpmethod="POST" ;;
     put|PUT)
       httpmethod="PUT" ;;
+    patch|PATCH)
+      httpmethod="PATCH" ;;
     delete|DELETE)
       httpmethod="DELETE" ;;
     *)
