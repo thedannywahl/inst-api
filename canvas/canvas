@@ -115,40 +115,40 @@ else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
     while getopts ":hlvcasg:i:p:q:r:x:X:t:d:o:f:F:" opt; do
       case $opt in
-        h)
+        h|help)
           $(insthelp verbosehelp $cmd)
           exit ;;
-        l)
+        l|license)
           $(insthelp license)
           exit ;;
-        v)
+        v|version)
           $(insthelp version $cmd $ver)
           exit ;;
-        c)
+        c|config)
           $(insthelp setconfig $cmd)
           exit ;;
-        a)
+        a|all)
           getpages=true ;;
-        s)
+        s|sample)
           sample=true ;;
-        g)
+        g|graphql)
           graphql=true
           graphql_operation="$OPTARG" ;;
-        i)
+        i|info)
           graphql_variables="$OPTARG" ;;
-        q)
+        q|quantity)
           perpage="$OPTARG" ;;
-        p)
+        p|page)
           pageint="$OPTARG" ;;
-        r)
+        r|renderer)
           outputrenderer=$(insthelp setrenderer $OPTARG) ;;
         X|x)
           httpmethod=$(insthelp sethttp $OPTARG) ;;
-        d)
+        d|domain)
           canvas_domain="$OPTARG" ;;
-        t)
+        t|token)
           canvas_token="$OPTARG" ;;
-        o)
+        o|output)
           outputpath=$(insthelp setoutput $OPTARG ${BASH_ARGV[0]})
           if [ "$outputpath" = "ERR" ]; then exit 1; fi ;;
         F|f)

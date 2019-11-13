@@ -116,36 +116,36 @@ else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
     while getopts ":hlvcasr:x:X:t:d:o:p:q:f:F:" opt; do
       case $opt in
-        h)
+        h|help)
           $(insthelp verbosehelp $cmd)
           exit ;;
-        l)
+        l|license)
           $(insthelp license)
           exit ;;
-        v)
+        v|version)
           $(insthelp version $cmd $ver)
           exit ;;
-        c)
+        c|config)
           $(insthelp setconfig $cmd)
           exit ;;
-        r)
+        r|renderer)
           outputrenderer=$(insthelp setrenderer $OPTARG) ;;
         X|x)
           httpmethod=$(insthelp sethttp $OPTARG) ;;
-        d)
+        d|domain)
           catalog_domain="$OPTARG" ;;
-        t)
+        t|token)
           catalog_token="$OPTARG" ;;
-        o)
+        o|output)
           outputpath=$(insthelp setoutput $OPTARG ${BASH_ARGV[0]})
           if [ "$outputpath" = "ERR" ]; then exit 1; fi ;;
-        a)
+        a|all)
           getpages=true ;;
-        s)
+        s|sample)
           sample=true ;;
-        q)
+        q|quantity)
           perpage="$OPTARG" ;;
-        p)
+        p|page)
           pageint="$OPTARG" ;;
         F|f)
           formopts="$formopts -F $OPTARG" ;;

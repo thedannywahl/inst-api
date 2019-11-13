@@ -53,31 +53,31 @@ else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
     while getopts ":hlvcsr:x:X:e:p:d:o:f:F:" opt; do
       case $opt in
-        h)
+        h|help)
           $(insthelp verbosehelp $cmd)
           exit ;;
-        l)
+        l|license)
           $(insthelp license)
           exit ;;
-        v)
+        v|version)
           $(insthelp version $cmd $ver)
           exit ;;
-        c)
+        c|config)
           $(insthelp setconfig $cmd)
           exit ;;
-        s)
+        s|sample)
           sample=true ;;
-        r)
+        r|renderer)
           outputrenderer=$(insthelp setrenderer $OPTARG) ;;
         X|x)
           httpmethod=$(insthelp sethttp $OPTARG) ;;
-        d)
+        d|domain)
           studio_domain="$OPTARG" ;;
-        e)
+        e|email)
           studio_email="$OPTARG" ;;
-        p)
+        p|password)
           studio_password="$OPTARG" ;;
-        o)
+        o|output)
           outputpath=$(insthelp setoutput $OPTARG ${BASH_ARGV[0]})
           if [ "$outputpath" = "ERR" ]; then exit 1; fi ;;
         F|f)
