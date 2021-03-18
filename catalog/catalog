@@ -197,7 +197,7 @@ fi
 makepage
 makeperpage
 if [ "$getpages" = true ] && [ "$httpmethod" == "GET" ]; then
-  command="curl $curlopts -I -X $httpmethod \"https://$catalog_domain.catalog.instructure.com/api/v1/$path$page$perpage\""
+  command="curl $curlopts -H 'Authorization: Token token=\"$catalog_token\"' -I -X $httpmethod \"https://$catalog_domain.catalog.instructure.com/api/v1/$path$page$perpage\""
   getpages "$command"
 fi
 
@@ -208,7 +208,7 @@ if [ $httpmethod != "GET" ]; then
 fi
 
 while
-  command="curl $curlopts -X $httpmethod \"https://$catalog_domain.catalog.instructure.com/api/v1/$path$page$perpage\" $formopts $outputrenderer $outputpath"
+  command="curl $curlopts -H 'Authorization: Token token=\"$catalog_token\"' -X $httpmethod \"https://$catalog_domain.catalog.instructure.com/api/v1/$path$page$perpage\" $formopts $outputrenderer $outputpath"
   if [ "$sample" = true ]; then
     printf >&2 "$command\r\n"
   else
