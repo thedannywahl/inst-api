@@ -165,7 +165,6 @@ sethttp() {
 ################################################################################
 readconfig() {
   local cmd=$1
-  local bridgeconfig=("bridge_domain" "bridge_token")
   local canvasconfig=("canvas_domain" "canvas_token")
   local catalogconfig=("catalog_domain" "catalog_token")
   local cdataconfig=("data_key" "data_secret")
@@ -173,8 +172,6 @@ readconfig() {
   local studioconfig=("studio_domain" "studio_email" "studio_password")
   local cfg=()
   case $cmd in
-    bridge)
-      cfg=(${bridgeconfig[@]}) ;;
     canvas)
       cfg=(${canvasconfig[@]}) ;;
     catalog)
@@ -227,8 +224,6 @@ setconfig() {
         touch ~/.inst
         if [ $? = 0 ]; then
           case $cmd in
-            bridge)
-               bridge_setdomain; bridge_settoken;;
             canvas)
                canvas_setdomain; canvas_settoken;;
             catalog)
@@ -255,21 +250,6 @@ setconfig() {
     esac
   done
   clear >&2
-}
-
-bridge_setdomain() {
-  clear >&2
-  printf >&2 "what is your Bridge subdomain?\r\n"
-  printf >&2 "https://<subdomain>.bridgeapp.com"
-  read bridgedomain
-  echo "bridge_domain=\"$bridgedomain\"" >> ~/.inst
-}
-
-bridge_settoken() {
-  clear >&2
-  echo >&2 "What is your Bridge API token?\r\n"
-  read bridgetoken
-  echo "bridge_token=\"$bridgetoken\"" >> ~/.inst
 }
 
 canvas_setdomain() {
