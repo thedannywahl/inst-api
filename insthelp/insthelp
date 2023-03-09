@@ -49,16 +49,7 @@ setrenderer() {
   exit
 }
 
-curlopts="--retry 2 --retry-connrefused -s -S -g"
-curlopts() {
-  tls=$(openssl ciphers -v | sed -ne '/TLSv1/p')
-  if [[ $tls == *"TLSv1.3"* ]]; then
-    curlopts="$curlopts --tlsv1.3"
-  else
-    curlopts="$curlopts --tlsv1.2"
-  fi
-}
-curlopts
+curlopts="--retry 2 --retry-connrefused -s -S -g --tlsv1.2"
 
 logo() {
   local cmd=$1
