@@ -68,6 +68,9 @@ OPTIONS
         The Form option transparently passes to curl.  Please read
         the curl documentation regarding the use of the Form option.
 
+    -g
+        Switches the base path to use the GraphQL API.
+
     -h
         Usage help.  This lists all the available options with
         descriptions and examples.
@@ -143,7 +146,7 @@ OPTIONS
         Version information.
 
     -z
-        Switches the base path to the New Quizzes API
+        Switches the base path to the New Quizzes API.
 
 METHOD
     The method is the URL path to be queried, excluding the
