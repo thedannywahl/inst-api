@@ -142,6 +142,9 @@ OPTIONS
     -v
         Version information.
 
+    -z
+        Switches the base path to the New Quizzes API
+
 METHOD
     The method is the URL path to be queried, excluding the
     domain, subdomain and, /api/v1/ path.
@@ -186,6 +189,9 @@ EXAMPLES
 
     Get all the courses for a user, 50 courses per page
         canvas -a -q 50 courses
+
+    Get New Quizzes in a course
+        canvas -z course/<course_id>/quizzes
 
 FILES
     ~/.inst
