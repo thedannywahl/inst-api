@@ -113,7 +113,7 @@ elif [ $# -eq 0 ] && [ -f ~/.inst ]; then
   exit 2
 else
   while [ $# -gt 0 ] && [ "$1" != "--" ]; do
-    while getopts ":hlvcasg:i:p:q:r:x:X:t:d:o:f:F:" opt; do
+    while getopts ":hlvcaszg:i:p:q:r:x:X:t:d:o:f:F:" opt; do
       case $opt in
         h|help)
           $(insthelp verbosehelp $cmd)
@@ -134,6 +134,8 @@ else
         g|graphql)
           graphql=true
           graphql_operation="$OPTARG" ;;
+        z|quiz)
+          quiz=true ;;
         i|info)
           graphql_variables="$OPTARG" ;;
         q|quantity)
@@ -211,6 +213,8 @@ else
   curlopts="$curlopts -H \"Authorization: Bearer $canvas_token\""
   if [ "$graphql" = true ]; then
     prefix="api/graphql"
+  elif [ "$quiz" = true ]; then
+    prefix="api/quiz/v1/"
   else
     prefix="api/v1/"
   fi
