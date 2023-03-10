@@ -38,6 +38,7 @@ else
  $(insthelp setconfig $cmd)
  exit
 fi
+cfg_domain=$catalog_domain
 
 # PAGINATION ###################################################################
 # ##############################################################################
@@ -180,14 +181,15 @@ fi
 # ##############################################################################
 if [ -z "$catalog_domain" ] && [ -z "$catalog_token" ]; then
   $(insthelp readconfig $cmd)
-elif [ $catalog_domain = "beta" ]; then
-  sd=$catalog_domain
-  $(insthelp readconfig $cmd)
-  canvas_domain="$catalog_domain.$sd"
 elif [ -z "$catalog_domain" ] || [ -z "$catalog_domain" ]; then
   printf >&2 "Both \`-d\` and \`-t\` are requied when not using a config file\r\n"
   $(insthelp help $cmd)
   exit 2
+fi
+
+if [ $catalog_domain = "beta" ] || [ $catalog_domain = "test" ]; then
+  $(insthelp readconfig $cmd)
+  catalog_domain="$cfg_domain.$catalog_domain"
 fi
 
 if [ -n "$outputpath" ] && [ -n "$outputrenderer" ]; then
